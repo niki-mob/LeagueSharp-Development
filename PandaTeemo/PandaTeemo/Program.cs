@@ -15,7 +15,7 @@ namespace PandaTeemo
         public const string ChampionName = "Teemo";
 
         //PacketCast
-        public static bool PacketCast = false;
+        //public static bool PacketCast = false;
 
         //Spells
         public static Spell Q;
@@ -27,6 +27,7 @@ namespace PandaTeemo
         public static bool QReady;
         public static bool WReady;
         public static bool RReady;
+
 
         //Orbwalker
         public static Orbwalking.Orbwalker Orbwalker;
@@ -55,8 +56,6 @@ namespace PandaTeemo
             W = new Spell(SpellSlot.W);
             R = new Spell(SpellSlot.R, 230);
 
-            //Summoners
-            Ignite = new Spell(Player.GetSpellSlot("summonerdot"), 600);
 
             //Menu
             Config = new Menu("PandaTeemo", "PandaTeemo", true);
@@ -68,34 +67,30 @@ namespace PandaTeemo
             //OrbWalker Sub
 
             var orbwalking = Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
-            //var lasthit = Config.AddSubMenu(new Menu("LastHit", "LastHit"));
             var combo = Config.AddSubMenu(new Menu("Combo", "Combo"));
             var harass = Config.AddSubMenu(new Menu("Harass", "Harass"));
             var laneclear = Config.AddSubMenu(new Menu("LaneClear", "LaneClear"));
-            var misc = Config.AddSubMenu(new Menu("Misc", "Misc"));
 
             //Extra
             Config.SubMenu("Combo").AddItem(new MenuItem("qcombo", "Use Q in Combo").SetValue(true));
             combo.AddItem(new MenuItem("wcombo", "Use W in Combo").SetValue(true));
+            Config.SubMenu("Combo").AddItem(new MenuItem("rcombo", "Use R in Combo").SetValue(true));
 
-            //lasthit.AddItem(new MenuItem("farmq", "LastHit with Q").SetValue(true));
 
-            //harass.AddItem(new MenuItem("Harass with Q", "Harass with Q").SetValue(true));
+            harass.AddItem(new MenuItem("qharass", "Harass with Q").SetValue(true));
 
-            laneclear.AddItem(new MenuItem("qClear", "LaneClear with Q").SetValue(false));
-
-            //misc.AddItem(new MenuItem("packetCast", "Use Packets for Spells").SetValue(false));
+            laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(false));
+            laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(false));
 
             //Load OrbWalker
             Orbwalker = new Orbwalking.Orbwalker(orbwalking);
             Config.AddToMainMenu();
             Config.AddItem(new MenuItem("autoQ", "Automatic Q").SetValue(false));
             Config.AddItem(new MenuItem("autoW", "Automatic W").SetValue(false));
-            Config.AddItem(new MenuItem("autoignite", "Automatic Ignite").SetValue(false));
 
             //Events
             Game.OnGameUpdate += Game_OnGameUpdate;
-            Game.PrintChat("PandaTeemo WIP by KarmaPanda");
+            Game.PrintChat("<font color=\"#FF0000\"><b>PandaTeemo BETA v1 by KarmaPanda<b></font>");
         }
         #region Combo
         public static void Combo()
@@ -108,12 +103,16 @@ namespace PandaTeemo
 
             var useQ = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useW = Config.SubMenu("Combo").Item("wcombo").GetValue<bool>();
+            var useR = Config.SubMenu("Combo").Item("rcombo").GetValue<bool>();
+
 
             if (Q.IsReady() && useQ)
                 if (target.IsValidTarget())
                     Q.Cast(target);
             if (WReady & useW == true)
                 W.Cast(true);
+            if (R.IsReady() && useR)
+                R.Cast(ObjectManager.Player.Position);
 
             if (Orbwalker.ActiveMode.ToString() == "Combo")
             {
@@ -131,6 +130,11 @@ namespace PandaTeemo
         public static void Harass()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var useQ = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
+
+            if (Q.IsReady() && useQ)
+                if (target.IsValidTarget())
+                    Q.Cast(target);
 
         }
         #endregion
@@ -139,14 +143,26 @@ namespace PandaTeemo
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, 500);
+            var rangedMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range + W.Width,
+    MinionTypes.Ranged);
+            var rLocation = R.GetCircularFarmLocation(allMinions, R.Range);
+            var r2Location = R.GetCircularFarmLocation(rangedMinions, R.Range);
             var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
+            var useR = Config.SubMenu("LaneClear").Item("rclear").GetValue<bool>();
+            var bestLocation = (rLocation.MinionsHit > r2Location.MinionsHit + 1) ? rLocation : r2Location;
 
             if(allMinions.Count > 0 & useQ)
             {
-                if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.Q))
+                if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.Q) && Q.IsReady())
                     Q.CastOnUnit(allMinions[0]);
             }
-
+            if(allMinions.Count > 0 & useR)
+            {
+                if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) && R.IsReady())
+                {
+                        R.Cast(bestLocation.Position, true);
+                }
+            }
         }
         #endregion
         private static void Game_OnGameUpdate(EventArgs args)
