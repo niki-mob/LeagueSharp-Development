@@ -14,9 +14,6 @@ namespace PandaTeemo
     {
         public const string ChampionName = "Teemo";
 
-        //PacketCast
-        //public static bool PacketCast = false;
-
         //Spells
         public static Spell Q;
         public static Spell W;
@@ -24,10 +21,10 @@ namespace PandaTeemo
         public static Spell R;
         public static Spell Ignite;
 
-        public static bool QReady;
-        public static bool WReady;
-        public static bool RReady;
-
+        public static bool Packets
+        {
+            get { return Config.SubMenu("Misc").Item("packets").GetValue<bool>(); }
+        }
 
         //Orbwalker
         public static Orbwalking.Orbwalker Orbwalker;
@@ -55,7 +52,7 @@ namespace PandaTeemo
             Q = new Spell(SpellSlot.Q, 580);
             W = new Spell(SpellSlot.W);
             R = new Spell(SpellSlot.R, 230);
-
+            R.SetSkillshot(0.1f, 75f, float.MaxValue, false, SkillshotType.SkillshotCircle);
 
             //Menu
             Config = new Menu("PandaTeemo", "PandaTeemo", true);
@@ -70,12 +67,12 @@ namespace PandaTeemo
             var combo = Config.AddSubMenu(new Menu("Combo", "Combo"));
             var harass = Config.AddSubMenu(new Menu("Harass", "Harass"));
             var laneclear = Config.AddSubMenu(new Menu("LaneClear", "LaneClear"));
+            var misc = Config.AddSubMenu(new Menu("Misc", "Misc"));
 
             //Extra
             Config.SubMenu("Combo").AddItem(new MenuItem("qcombo", "Use Q in Combo").SetValue(true));
             combo.AddItem(new MenuItem("wcombo", "Use W in Combo").SetValue(true));
-            Config.SubMenu("Combo").AddItem(new MenuItem("rcombo", "Use R in Combo").SetValue(true));
-
+            Config.SubMenu("Combo").AddItem(new MenuItem("rcombo", "Kite with R in Combo").SetValue(false));
 
             harass.AddItem(new MenuItem("qharass", "Harass with Q").SetValue(true));
 
@@ -88,9 +85,23 @@ namespace PandaTeemo
             Config.AddItem(new MenuItem("autoQ", "Automatic Q").SetValue(false));
             Config.AddItem(new MenuItem("autoW", "Automatic W").SetValue(false));
 
+            //Interrupter
+            var interrupt = Config.AddSubMenu(new Menu("Interrupt", "Interrupt"));
+            interrupt.AddItem(new MenuItem("intq", "Interrupt with Q").SetValue(true));
+
+            //packetcast
+            Config.SubMenu("Misc").AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
+
+            //Drawing Menu
+            var drawing = Config.AddSubMenu(new Menu("Drawing", "Drawing"));
+            drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(true));
+            drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(true));
+
             //Events
             Game.OnGameUpdate += Game_OnGameUpdate;
-            Game.PrintChat("<font color=\"#FF0000\"><b>PandaTeemo BETA v1 by KarmaPanda<b></font>");
+            Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
+            Drawing.OnDraw += DrawingOnOnDraw;
+            Game.PrintChat("<font color=\"#FF0000\"><b>PandaTeemo RELEASE by KarmaPanda</b></font>");
         }
         #region Combo
         public static void Combo()
@@ -108,11 +119,13 @@ namespace PandaTeemo
 
             if (Q.IsReady() && useQ)
                 if (target.IsValidTarget())
-                    Q.Cast(target);
-            if (WReady & useW == true)
+                    Q.Cast(target, Packets);
+
+            if (W.IsReady() && useW == true)
                 W.Cast(true);
+
             if (R.IsReady() && useR)
-                R.Cast(ObjectManager.Player.Position);
+                R.Cast(target.Position, Packets);
 
             if (Orbwalker.ActiveMode.ToString() == "Combo")
             {
@@ -123,7 +136,6 @@ namespace PandaTeemo
             }
             else
                 Orbwalking.Attack = true;
-
         }
         #endregion
         #region Harass
@@ -135,7 +147,6 @@ namespace PandaTeemo
             if (Q.IsReady() && useQ)
                 if (target.IsValidTarget())
                     Q.Cast(target);
-
         }
         #endregion
         #region LaneClear
@@ -154,7 +165,7 @@ namespace PandaTeemo
             if(allMinions.Count > 0 & useQ)
             {
                 if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.Q) && Q.IsReady())
-                    Q.CastOnUnit(allMinions[0]);
+                    Q.CastOnUnit(allMinions[0], Packets);
             }
             if(allMinions.Count > 0 & useR)
             {
@@ -165,12 +176,15 @@ namespace PandaTeemo
             }
         }
         #endregion
+        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender, Interrupter2.InterruptableTargetEventArgs args)
+        {
+            var intq = Config.SubMenu("Interrupt").Item("intq").GetValue<bool>();
+
+            if (intq & Q.IsReady() || args.DangerLevel != Interrupter2.DangerLevel.High)
+                Q.Cast(sender, Packets);
+        }
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            QReady = (Player.Spellbook.CanUseSpell(Q.Slot) == SpellState.Ready || Player.Spellbook.CanUseSpell(Q.Slot) == SpellState.Surpressed);
-            WReady = (Player.Spellbook.CanUseSpell(W.Slot) == SpellState.Ready || Player.Spellbook.CanUseSpell(W.Slot) == SpellState.Surpressed);
-            RReady = (Player.Spellbook.CanUseSpell(R.Slot) == SpellState.Ready || Player.Spellbook.CanUseSpell(R.Slot) == SpellState.Surpressed);
-
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var AutoQ = Config.Item("autoQ").GetValue<bool>();
             var AutoW = Config.Item("autoW").GetValue<bool>();
@@ -180,9 +194,10 @@ namespace PandaTeemo
             {
                 W.Cast(true);
             }
-            else if (Q.IsReady() && AutoQ)
+
+            if (Q.IsReady() && AutoQ)
             {
-                Q.Cast(target, true);
+                Q.Cast(target, true, Packets);
             }
 
             //Orbwalker
@@ -197,6 +212,22 @@ namespace PandaTeemo
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
                 LaneClear();
+            }
+        }
+        private static void DrawingOnOnDraw(EventArgs args)
+        {
+            var drawQ = Config.SubMenu("Drawing").Item("drawQ").GetValue<bool>();
+            var drawR = Config.SubMenu("Drawing").Item("drawR").GetValue<bool>();
+
+            var player = ObjectManager.Player.Position;
+
+            if (drawQ)
+            {
+                LeagueSharp.Common.Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.Gold : System.Drawing.Color.Green);
+            }
+            if (drawR)
+            {
+                LeagueSharp.Common.Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.Gold : System.Drawing.Color.Green);
             }
         }
     }
