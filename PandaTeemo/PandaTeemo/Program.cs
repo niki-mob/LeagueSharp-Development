@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿﻿using System;
+=======
+﻿using System;
+>>>>>>> origin/master
 using System.Drawing;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -60,7 +64,11 @@ namespace PandaTeemo
             TargetSelector.AddToMenu(targetSelectorMenu);
             Config.AddSubMenu(targetSelectorMenu);
 
+<<<<<<< HEAD
             //OrbWalker SubMenu
+=======
+            //OrbWalker Sub
+>>>>>>> origin/master
             var orbwalking = Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
             var combo = Config.AddSubMenu(new Menu("Combo", "Combo"));
             var harass = Config.AddSubMenu(new Menu("Harass", "Harass"));
@@ -153,6 +161,7 @@ namespace PandaTeemo
             {
                 Orbwalking.Attack = true;
             }
+<<<<<<< HEAD
         }
 
         #endregion
@@ -170,7 +179,10 @@ namespace PandaTeemo
                     Q.Cast(target, Packets);
                 }
             }
+=======
+>>>>>>> origin/master
         }
+
         #endregion
 
         #region Harass
@@ -187,7 +199,11 @@ namespace PandaTeemo
 
             if (target.IsValidTarget())
             {
+<<<<<<< HEAD
                 Q.Cast(target, Packets);
+=======
+                Q.Cast(target);
+>>>>>>> origin/master
             }
         }
 
