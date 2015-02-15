@@ -76,8 +76,8 @@ namespace PandaTeemo
             harass.AddItem(new MenuItem("qharass", "Harass with Q").SetValue(true));
 
             //LaneClear Menu
-            laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(false));
-            laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(false));
+            laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(true));
+            laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(true));
 
             //Main Menu
             Orbwalker = new Orbwalking.Orbwalker(orbwalking);
@@ -93,7 +93,7 @@ namespace PandaTeemo
             Config.SubMenu("Misc").AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
             //KS Menu
-            var KS = Config.AddSubMenu(new Menu("KSMenu", "Kill Steal Menu"));
+            var KS = Config.AddSubMenu(new Menu("KSMenu", "KSMenu"));
             KS.AddItem(new MenuItem("KSQ", "KillSteal with Q").SetValue(true));
 
             //Drawing Menu
