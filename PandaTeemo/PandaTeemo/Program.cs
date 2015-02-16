@@ -12,9 +12,7 @@ namespace PandaTeemo
         //Spells
         public static Spell Q;
         public static Spell W;
-        public static Spell E;
         public static Spell R;
-        public static Spell Ignite;
 
         //Orbwalker
         public static Orbwalking.Orbwalker Orbwalker;
@@ -133,7 +131,7 @@ namespace PandaTeemo
                 W.Cast(true);
             }
 
-            if (R.IsReady() && useR)
+            if (R.IsReady() && useR && R.IsInRange(target))
             {
                 R.Cast(target.Position, Packets);
             }
@@ -197,9 +195,9 @@ namespace PandaTeemo
 
         public static void LaneClear()
         {
-            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, 500);
+            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
             var rangedMinions = MinionManager.GetMinions(
-                ObjectManager.Player.ServerPosition, Q.Range + W.Width, MinionTypes.Ranged);
+                ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.Ranged);
             var rLocation = R.GetCircularFarmLocation(allMinions, R.Range);
             var r2Location = R.GetCircularFarmLocation(rangedMinions, R.Range);
             var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
@@ -228,6 +226,14 @@ namespace PandaTeemo
 
         #endregion
 
+        #region LastHit
+
+        public static void LastHit()
+        {
+            var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
+        }
+
+        #endregion
         private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender,
             Interrupter2.InterruptableTargetEventArgs args)
         {
@@ -268,6 +274,10 @@ namespace PandaTeemo
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
                 LaneClear();
+            }
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                LastHit();
             }
             //KillSteal
             if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>())
