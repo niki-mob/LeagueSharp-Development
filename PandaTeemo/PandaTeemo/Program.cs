@@ -92,12 +92,12 @@ namespace PandaTeemo
             interrupt.AddItem(new MenuItem("intq", "Interrupt with Q").SetValue(true));
 
             //Misc
-            Config.SubMenu("Misc").AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
-            Config.SubMenu("Misc").AddItem(new MenuItem("AutoShroom", "Auto Place Shrooms in Important Places").SetValue(true));
+            misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
+            misc.AddItem(new MenuItem("autoR", "Auto Place Shrooms in Important Places").SetValue(true));
 
             //KS Menu
-            var KS = Config.AddSubMenu(new Menu("KSMenu", "KSMenu"));
-            KS.AddItem(new MenuItem("KSQ", "KillSteal with Q").SetValue(true));
+            var ks = Config.AddSubMenu(new Menu("KSMenu", "KSMenu"));
+            ks.AddItem(new MenuItem("KSQ", "KillSteal with Q").SetValue(true));
 
             //Drawing Menu
             var drawing = Config.AddSubMenu(new Menu("Drawing", "Drawing"));
@@ -235,7 +235,12 @@ namespace PandaTeemo
                 return;
             }
 
-            if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) && R.IsReady())
+            if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()))
+            {
+                R.Cast(bestLocation.Position, true);
+            }
+            else if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) &&
+                     R.IsReady() && R.IsInRange(rLocation.Position.To3D()))
             {
                 R.Cast(bestLocation.Position, true);
             }
@@ -260,7 +265,7 @@ namespace PandaTeemo
         {
             if (!R.IsReady())
                 return;
-            if (Config.SubMenu("Misc").Item("AutoShroom").GetValue<bool>())
+            if (Config.SubMenu("Misc").Item("autoR").GetValue<bool>())
                 foreach (var place in ShroomPositions.HighPriority.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
                     R.Cast(place, Packets);
         }
@@ -271,7 +276,6 @@ namespace PandaTeemo
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
-            var autoR = Config.SubMenu("Misc").Item("AutoShroom").GetValue<bool>();
 
             //Auto Q and W
             if (W.IsReady() && autoW)
