@@ -108,7 +108,7 @@ namespace PandaTeemo
 
             //Events
             ShroomPositions = new ShroomTables();
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             Drawing.OnDraw += DrawingOnOnDraw;
             Game.PrintChat("<font color=\"#FF0000\"><b>PandaTeemo RELEASE by KarmaPanda</b></font>");
@@ -333,6 +333,7 @@ namespace PandaTeemo
                     Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);
                 }
         }
+        //The following code is taken from UC2's Teemo. All the shroom locations are modified in the recent update for better positioning.
         internal class ShroomTables
         {
             public List<Vector3> HighPriority = new List<Vector3>();
