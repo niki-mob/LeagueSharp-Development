@@ -15,6 +15,7 @@ namespace PandaTeemo
         //Spells
         public static Spell Q;
         public static Spell W;
+        public static Spell E;
         public static Spell R;
         public static ShroomTables ShroomPositions;
         
@@ -44,12 +45,14 @@ namespace PandaTeemo
         {
             if (Player.BaseSkinName != ChampionName)
             {
+                Game.PrintChat("<font color=\"#FF0000\"><b>Champion is not supported.</b></font>");
                 return;
             }
 
             //Spells
             Q = new Spell(SpellSlot.Q, 580);
             W = new Spell(SpellSlot.W);
+            E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R, 230);
 
             R.SetSkillshot(0.1f, 75f, float.MaxValue, false, SkillshotType.SkillshotCircle);
@@ -248,6 +251,8 @@ namespace PandaTeemo
 
         #endregion
 
+        #region Interrupt
+
         private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender,
             Interrupter2.InterruptableTargetEventArgs args)
         {
@@ -258,6 +263,8 @@ namespace PandaTeemo
                 Q.Cast(sender, Packets);
             }
         }
+
+        #endregion
 
         #region AutoShroom
 
@@ -271,6 +278,39 @@ namespace PandaTeemo
         }
 
         #endregion
+
+        #region LastHit
+
+        public static void LastHit()
+        {
+            double TeemoE = 0;
+
+            var t = TargetSelector.GetTarget((float)TeemoE, TargetSelector.DamageType.Physical);
+
+            TeemoE += Player.GetSpellDamage(t, SpellSlot.E);
+
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, 30, MinionTypes.All);
+
+                Orbwalking.DisableNextAttack = true;
+
+                foreach (var minion in allMinions)
+                {
+                    if (minion.Health < ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE)
+                    {
+                        Orbwalking.CanAttack();
+                    }
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        #endregion
+
         private static void Game_OnGameUpdate(EventArgs args)
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
@@ -303,6 +343,10 @@ namespace PandaTeemo
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
                 LaneClear();
+            }
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                LastHit();
             }
             //KillSteal
             if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>())
