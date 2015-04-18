@@ -1,7 +1,7 @@
 # LeagueSharp-Development
 LeagueSharp Scripts
 
-PandaTeemo - Version 1.0.1.1
+PandaTeemo - Version 1.2.0.0
 
 Features:
 
