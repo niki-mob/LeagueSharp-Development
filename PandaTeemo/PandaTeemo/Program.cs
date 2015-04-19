@@ -75,13 +75,13 @@ namespace PandaTeemo
             //Combo Menu
             Config.SubMenu("Combo").AddItem(new MenuItem("qcombo", "Use Q in Combo").SetValue(true));
             combo.AddItem(new MenuItem("wcombo", "Use W in Combo").SetValue(true));
-            Config.SubMenu("Combo").AddItem(new MenuItem("rcombo", "Kite with R in Combo").SetValue(false));
+            Config.SubMenu("Combo").AddItem(new MenuItem("rcombo", "Kite with R in Combo").SetValue(true));
 
             //Harass Menu
             harass.AddItem(new MenuItem("qharass", "Harass with Q").SetValue(true));
 
             //LaneClear Menu
-            laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(false));
+            laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(true));
             laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(true));
 
             //Main Menu
@@ -104,15 +104,20 @@ namespace PandaTeemo
 
             //Drawing Menu
             var drawing = Config.AddSubMenu(new Menu("Drawing", "Drawing"));
-            drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(true));
-            drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(true));
+            drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(false));
+            drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
 
             //Output to Console Location
-            var console = Config.AddSubMenu(new Menu("Console", "Console"));
-            console.AddItem(new MenuItem("Debug", "Debug").SetValue(new KeyBind(84, KeyBindType.Press)));
+            //var console = Config.AddSubMenu(new Menu("Console", "Console"));
+            //console.AddItem(new MenuItem("Debug", "Debug").SetValue(new KeyBind(84, KeyBindType.Press)));
             
+            //Flee Menu
+            var flee = Config.AddSubMenu(new Menu("Flee Menu", "Flee"));
+            flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(90, KeyBindType.Press)));
+            flee.AddItem(new MenuItem("r", "Use R while Flee").SetValue(true));
+            flee.AddItem(new MenuItem("w", "Use W while Flee").SetValue(true));
 
             //Events
             ShroomPositions = new ShroomTables();
@@ -220,38 +225,47 @@ namespace PandaTeemo
 
         public static void LaneClear()
         {
-            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
-            var rangedMinions = MinionManager.GetMinions(
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
+            var rangedMinionsQ = MinionManager.GetMinions(
                 ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.Ranged);
-            var rLocation = R.GetCircularFarmLocation(allMinions, R.Range);
-            var r2Location = R.GetCircularFarmLocation(rangedMinions, R.Range);
+
+            var allMinionsR = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, R.Range);
+            var rangedMinionsR = MinionManager.GetMinions(
+                ObjectManager.Player.ServerPosition, R.Range, MinionTypes.Ranged);
+
+            var rLocation = R.GetCircularFarmLocation(allMinionsR, R.Range);
+            var r2Location = R.GetCircularFarmLocation(rangedMinionsR, R.Range);
+
             var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
             var useR = Config.SubMenu("LaneClear").Item("rclear").GetValue<bool>();
+
             var bestLocation = (rLocation.MinionsHit > r2Location.MinionsHit + 1) ? rLocation : r2Location;
 
-            if (allMinions.Count > 0 & useQ)
+            if (allMinionsQ.Count > 0 & useQ)
             {
-                if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.Q) &&
+                if (allMinionsQ[0].Health < ObjectManager.Player.GetSpellDamage(allMinionsQ[0], SpellSlot.Q) &&
                     Q.IsReady())
                 {
-                    Q.CastOnUnit(allMinions[0], Packets);
+                    Q.CastOnUnit(allMinionsQ[0], Packets);
                 }
             }
 
-            if (!(allMinions.Count > 0 & useR))
+            if (!(allMinionsR.Count > 0 & useR))
             {
                 return;
             }
 
-            if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()))
+            if (allMinionsR[0].Health < ObjectManager.Player.GetSpellDamage(allMinionsR[0], SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()))
             {
                 R.Cast(bestLocation.Position, true);
             }
-            else if (allMinions[0].Health < ObjectManager.Player.GetSpellDamage(allMinions[0], SpellSlot.R) &&
+
+            else if (allMinionsR[0].Health < ObjectManager.Player.GetSpellDamage(allMinionsR[0], SpellSlot.R) &&
                      R.IsReady() && R.IsInRange(rLocation.Position.To3D()))
             {
                 R.Cast(bestLocation.Position, true);
             }
+
         }
 
         #endregion
@@ -314,6 +328,28 @@ namespace PandaTeemo
 
         #endregion
 
+        #region Flee
+
+        static void Flee()
+        {
+            var useR = Config.SubMenu("Flee").Item("r").GetValue<bool>();
+            var useW = Config.SubMenu("Flee").Item("w").GetValue<bool>();
+
+            Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+
+            if (useR && R.IsReady())
+            {
+                R.Cast(Player.Position, Packets);
+            }
+
+            if (useW && W.IsReady())
+            {
+                W.Cast(Player);
+            }
+        }
+
+        #endregion
+
         private static void Game_OnGameUpdate(EventArgs args)
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
@@ -352,18 +388,25 @@ namespace PandaTeemo
                 Orbwalking.DisableNextAttack = true;
                 LastHit();
             }
+
             //KillSteal
             if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>())
             {
                 KSQ();
             }
 
+            // Debug
+            //if(Config.SubMenu("Console").Item("Debug").IsActive())
+            //{
+            //    Console.WriteLine(Player.Position.X + "is the X position");
+            //    Console.WriteLine(Player.Position.Y + "is the Y Position");
+            //    Console.WriteLine(Player.Position.Z + "is the Z Position");
+            //}
 
-            if(Config.SubMenu("Console").Item("Debug").IsActive())
+            //Flee Menu
+            if (Config.SubMenu("Flee").Item("fleetoggle").IsActive())
             {
-                Console.WriteLine(Player.Position.X + "is the X position");
-                Console.WriteLine(Player.Position.Y + "is the Y Position");
-                Console.WriteLine(Player.Position.Z + "is the Z Position");
+                Flee();
             }
         }
 
