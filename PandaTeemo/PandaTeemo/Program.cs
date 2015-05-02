@@ -211,7 +211,7 @@ namespace PandaTeemo
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var useQ = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
 
-            if (Q.IsReady() && target.IsValidTarget() && useQ == true && Q.IsInRange(target))
+            if (Q.IsReady() && target.IsValidTarget() && useQ && Q.IsInRange(target))
             {
                 Q.Cast(target, Packets);
             }
@@ -362,16 +362,20 @@ namespace PandaTeemo
 
         static void Flee()
         {
-            var useR = Config.SubMenu("Flee").Item("r").GetValue<bool>();
+            // Checks if toggle is on
             var useW = Config.SubMenu("Flee").Item("w").GetValue<bool>();
+            var useR = Config.SubMenu("Flee").Item("r").GetValue<bool>();
 
+            // Force move to player's mouse cursor
             Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
 
+            // Uses R if avaliable and if toggle is on
             if (useR && R.IsReady())
             {
                 R.Cast(Player.Position, Packets);
             }
 
+            // Uses W if avaliable and if toggle is on
             if (useW && W.IsReady())
             {
                 W.Cast(Player);
@@ -385,30 +389,45 @@ namespace PandaTeemo
         static void AutoQ()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.All);
 
-            /*var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
-            var rangedMinionsQ = MinionManager.GetMinions(
-                ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.Ranged);*/
-
-            if (Q.IsReady() && Q.IsInRange(target))
+            if (Q.IsReady() && allMinionsQ.Count >= 1)
             {
-                Q.Cast(target);
+                foreach (var minion in allMinionsQ)
+                {
+                    if (minion.Health <= Q.GetDamage(minion) && Q.IsInRange(minion))
+                    {
+                        Q.CastOnUnit(minion, Packets);
+                    }
+                }
             }
 
-            //if (allMinionsQ.Count > 0)
-            //{
-            //    for (int i = 0; i >= allMinionsQ.Count; i++)
-            //    {
-            //        if (allMinionsQ[i].Health < ObjectManager.Player.GetSpellDamage(allMinionsQ[i], SpellSlot.Q) && Q.IsReady())
-            //        {
-            //            Q.CastOnUnit(allMinionsQ[i], Packets);
-            //        }
-            //        else if (rangedMinionsQ[i].Health < ObjectManager.Player.GetSpellDamage(rangedMinionsQ[i], SpellSlot.Q) && Q.IsReady())
-            //        {
-            //            Q.CastOnUnit(rangedMinionsQ[i], Packets);
-            //        }
-            //    }
-            //}
+            else if (Q.IsReady() && Q.IsInRange(target) && target.IsValid)
+            {
+                Q.Cast(target, Packets);
+            }
+
+            else
+            {
+                switch (Orbwalker.ActiveMode)
+                {
+                    case Orbwalking.OrbwalkingMode.Combo:
+                        Combo();
+                        break;
+                    case Orbwalking.OrbwalkingMode.Mixed:
+                        Harass();
+                        break;
+                    case Orbwalking.OrbwalkingMode.LastHit:
+                        Orbwalking.DisableNextAttack = true;
+                        LastHit();
+                        break;
+                    case Orbwalking.OrbwalkingMode.LaneClear:
+                        LaneClear();
+                        break;
+                    case Orbwalking.OrbwalkingMode.None:
+                        break;
+                }
+            }
         }
 
         #endregion
@@ -422,101 +441,206 @@ namespace PandaTeemo
                 W.Cast(Player);
             }
 
+            switch (Orbwalker.ActiveMode)
+            {
+                case Orbwalking.OrbwalkingMode.Combo:
+                    Combo();
+                    break;
+                case Orbwalking.OrbwalkingMode.Mixed:
+                    Harass();
+                    break;
+                case Orbwalking.OrbwalkingMode.LastHit:
+                    Orbwalking.DisableNextAttack = true;
+                    LastHit();
+                    break;
+                case Orbwalking.OrbwalkingMode.LaneClear:
+                    LaneClear();
+                    break;
+                case Orbwalking.OrbwalkingMode.None:
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region Auto Q & W
+
+        static void AutoQW()
+        {
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.All);
+
+            if (W.IsReady())
+            {
+                W.Cast();
+            }
+
+            if (Q.IsReady())
+            {
+                foreach (var minion in allMinionsQ)
+                {
+                    if (minion.Health <= Q.GetDamage(minion) && Q.IsInRange(minion))
+                    {
+                        Q.CastOnUnit(minion, Packets);
+                    }
+                }
+            }
+
+
+
+            else if (Q.IsReady() && Q.IsInRange(target))
+            {
+                Q.Cast(target);
+            }
+
+
+            else
+            {
+                switch (Orbwalker.ActiveMode)
+                {
+                    case Orbwalking.OrbwalkingMode.Combo:
+                        Combo();
+                        break;
+                    case Orbwalking.OrbwalkingMode.Mixed:
+                        Harass();
+                        break;
+                    case Orbwalking.OrbwalkingMode.LastHit:
+                        Orbwalking.DisableNextAttack = true;
+                        LastHit();
+                        break;
+                    case Orbwalking.OrbwalkingMode.LaneClear:
+                        LaneClear();
+                        break;
+                    case Orbwalking.OrbwalkingMode.None:
+                        break;
+                }
+            }
         }
 
         #endregion
 
         static void Game_OnGameUpdate(EventArgs args)
         {
-            // TO-DO: Make Orbwalker use case instead of if
-
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
 
-            //Auto Shroom
-            if (Config.SubMenu("Misc").Item("autoR").GetValue<bool>())
+
+
+            // Reworked Orbwalker
+            switch (Orbwalker.ActiveMode)
             {
-                AutoShroom();
+                case Orbwalking.OrbwalkingMode.Combo:
+                    // Reworked Auto Q and W
+                    if (autoQ && autoW)
+                    {
+                        AutoQW();
+                    }
+                    else if (autoQ)
+                    {
+                        AutoQ();
+                    }
+                    else if (autoW)
+                    {
+                        AutoW();
+                    }
+                    else
+                    {
+                        Combo();
+                    }
+                    break;
+                case Orbwalking.OrbwalkingMode.Mixed:
+                    // Reworked Auto Q and W
+                    if (autoQ && autoW)
+                    {
+                        AutoQW();
+                    }
+                    else if (autoQ)
+                    {
+                        AutoQ();
+                    }
+                    else if (autoW)
+                    {
+                        AutoW();
+                    }
+                    else
+                    {
+                        Harass();
+                    }
+                    break;
+                case Orbwalking.OrbwalkingMode.LastHit:
+                    // Reworked Auto Q and W
+                    if (autoQ && autoW)
+                    {
+                        AutoQW();
+                    }
+                    else if (autoQ)
+                    {
+                        AutoQ();
+                    }
+                    else if (autoW)
+                    {
+                        AutoW();
+                    }
+                    else
+                    {
+                        Orbwalking.DisableNextAttack = true;
+                        LastHit();
+                    }
+                    break;
+                case Orbwalking.OrbwalkingMode.LaneClear:
+                    // Reworked Auto Q and W
+                    if (autoQ && autoW)
+                    {
+                        AutoQW();
+                    }
+                    else if (autoQ)
+                    {
+                        AutoQ();
+                    }
+                    else if (autoW)
+                    {
+                        AutoW();
+                    }
+                    else
+                    {
+                        LaneClear();
+                    }
+                    break;
+                case Orbwalking.OrbwalkingMode.None:
+                    //KillSteal
+                    if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>())
+                    {
+                        KSQ();
+                    }
+
+                    //Flee Menu
+                    if (Config.SubMenu("Flee").Item("fleetoggle").IsActive())
+                    {
+                        Flee();
+                    }
+
+                    //Auto Shroom
+                    if (Config.SubMenu("Misc").Item("autoR").GetValue<bool>())
+                    {
+                        AutoShroom();
+                    }
+
+                    // Reworked Auto Q and W
+                    if (autoQ && autoW)
+                    {
+                        AutoQ();
+                        AutoW();
+                    }
+                    else if (autoQ)
+                    {
+                        AutoQ();
+                    }
+                    else if (autoW)
+                    {
+                        AutoW();
+                    }
+                    break;
             }
-
-            //Orbwalker
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
-            {
-                // Reworked Auto Q and W
-                if (autoQ == true)
-                {
-                    AutoQ();
-                    Combo();
-                }
-
-                if (autoW == true)
-                {
-                    AutoW();
-                    Combo();
-                }
-
-                Combo();
-            }
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
-            {
-                // Reworked Auto Q and W
-                if (autoQ == true)
-                {
-                    AutoQ();
-                    Harass();
-                }
-
-                if (autoW == true)
-                {
-                    AutoW();
-                    Harass();
-                }
-
-                Harass();
-            }
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
-            {
-                // Reworked Auto Q and W
-                if (autoQ == true)
-                {
-                    AutoQ();
-                    LaneClear();
-                }
-
-                if (autoW == true)
-                {
-                    AutoW();
-                    LaneClear();
-                }
-
-                LaneClear();
-
-            }
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
-            {
-                Orbwalking.DisableNextAttack = true;
-
-                // Reworked Auto Q and W
-                if (autoQ == true)
-                {
-                    AutoQ();
-                    LastHit();
-                }
-
-                if (autoW == true)
-                {
-                    AutoW();
-                    LastHit();
-                }
-                LastHit();
-            }
-
-            //KillSteal
-            if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>())
-            {
-                KSQ();
-            }
-
             // Debug
             //if(Config.SubMenu("Console").Item("Debug").IsActive())
             //{
@@ -524,23 +648,6 @@ namespace PandaTeemo
             //    Console.WriteLine(Player.Position.Y + "is the Y Position");
             //    Console.WriteLine(Player.Position.Z + "is the Z Position");
             //}
-
-            //Flee Menu
-            if (Config.SubMenu("Flee").Item("fleetoggle").IsActive())
-            {
-                Flee();
-            }
-
-            // Reworked Auto Q and W
-            if (autoQ == true)
-            {
-                AutoQ();
-            }
-
-            if (autoW == true)
-            {
-                AutoW();
-            }
         }
 
         static void DrawingOnOnDraw(EventArgs args)
@@ -551,13 +658,15 @@ namespace PandaTeemo
 
             var player = ObjectManager.Player.Position;
 
+            // Reworked Drawing Colors
+
             if (drawQ)
             {
-                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.Gold : System.Drawing.Color.Green);
+                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
             }
             if (drawR)
             {
-                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.Gold : System.Drawing.Color.Green);
+                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
             }
 
             // Multi Map Support Drawing
@@ -579,7 +688,6 @@ namespace PandaTeemo
 
             else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
             {
-                // WIP
                 foreach (var place in ShroomPositions.HowlingAbyss.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
                 {
                     Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);

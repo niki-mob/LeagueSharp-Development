@@ -1,9 +1,6 @@
-﻿﻿using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
+﻿using SharpDX;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 
 namespace PandaTeemo
@@ -115,8 +112,21 @@ namespace PandaTeemo
             SummonersRift.Add(new Vector3(9160f, 59.97022f, 2122f));
 
             /// Howling Abyss
-
             
+            // Blue Side
+            HowlingAbyss.Add(new Vector3(4787f, -178.3095f, 3909f));
+            HowlingAbyss.Add(new Vector3(4107f, -178.3095f, 5175f));
+            HowlingAbyss.Add(new Vector3(5927f, -178.3095f, 5197f));
+            HowlingAbyss.Add(new Vector3(5633f, -178.3095f, 6390f));
+
+            // Red Side
+            HowlingAbyss.Add(new Vector3(8921f, -178.3095f, 7873f));
+            HowlingAbyss.Add(new Vector3(7555f, -178.3095f, 6755f));
+            HowlingAbyss.Add(new Vector3(7677f, -178.3095f, 8643f));
+            HowlingAbyss.Add(new Vector3(6487f, -178.3095f, 7145f));
+
+            // Crystal Scar
+
 
             // Template
             // MAP NAME.Add(new Vector3("X"f, "Z"f, "Y"f));
