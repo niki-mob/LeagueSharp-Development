@@ -10,6 +10,8 @@ namespace PandaTeemo
 {
     internal class Program
     {
+        #region Initilization
+
         public const string ChampionName = "Teemo";
 
         //Spells
@@ -130,16 +132,17 @@ namespace PandaTeemo
             Game.OnUpdate += Game_OnGameUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             Drawing.OnDraw += DrawingOnOnDraw;
-
             //Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
             Orbwalking.AfterAttack += Orbwalking_AfterAttack;
         }
 
+        #endregion
+
         // WIP
 
-        /*#region BeforeAttack
+        #region BeforeAttack
 
-        static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        /*static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
             double TeemoE = 0;
             var t = TargetSelector.GetTarget((float)TeemoE, TargetSelector.DamageType.Physical);
@@ -164,9 +167,9 @@ namespace PandaTeemo
                 Orbwalking.DisableNextAttack = false;
                 return;
             }
-        }
+        }*/
 
-        #endregion*/
+        #endregion
 
         #region AfterAttack
 
