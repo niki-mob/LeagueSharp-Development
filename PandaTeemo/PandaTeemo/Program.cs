@@ -344,11 +344,11 @@ namespace PandaTeemo
             var minionR = Config.SubMenu("LaneClear").Item("minionR").GetValue<Slider>().Value;
 
             // Reworked LaneClear Logic
-            if (allMinionsQ.Count > 0 && useQ || minionR <= allMinionsR.Count && useR || minionR <= rangedMinionsR.Count && useR || minionR <= allMinionsR.Count + rangedMinionsR.Count)
+            if (allMinionsQ.Count > 0 && useQ || minionR <= allMinionsR.Count && useR || minionR <= rangedMinionsR.Count && useR || minionR <= allMinionsR.Count + rangedMinionsR.Count && useR)
             {
                 foreach (var minion in allMinionsQ)
                 {
-                    if (minion.Health < ObjectManager.Player.GetSpellDamage(minion, SpellSlot.Q) && Q.IsReady())
+                    if (minion.Health < ObjectManager.Player.GetSpellDamage(minion, SpellSlot.Q) && Q.IsReady() && useQ)
                     {
                         Q.CastOnUnit(minion, Packets);
                         return;
@@ -357,32 +357,18 @@ namespace PandaTeemo
 
                 foreach (var minion in allMinionsR)
                 {
-                    if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()))
+                    if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()) && useR)
                     {
                         R.Cast(bestLocation.Position, true);
                         return;
                     }
-                    else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()))
+                    else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()) && useR)
                     {
                         R.Cast(bestLocation.Position, true);
                         return;
                     }
                 }
             }
-
-            // Reworked LaneClear Logic
-            /*if (allMinionsQ.Count > 0 && useQ)
-            {
-                foreach(var minion in allMinionsQ)
-                {
-                    if (minion.Health < ObjectManager.Player.GetSpellDamage(minion, SpellSlot.Q) && Q.IsReady())
-                    {
-                        Q.CastOnUnit(minion, Packets);
-                        return;
-                    }
-                }
-            }*/
-
         }
 
         #endregion
