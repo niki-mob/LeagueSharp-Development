@@ -115,6 +115,7 @@ namespace PandaTeemo
             drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(true));
             drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(true));
             drawing.AddItem(new MenuItem("drawrClear", "Draw where to place R while LaneClear").SetValue(true));
+            drawing.AddItem(new MenuItem("drawrclearRange", "Draw R LaneClear Range").SetValue(new Slider(1500, 2500, 1000)));
             drawing.AddItem(new MenuItem("colorBlind", "Colorblind Mode").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
@@ -145,7 +146,7 @@ namespace PandaTeemo
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.3.3.7", 10000, true);
+            Notifications.AddNotification("Version 1.3.3.7 Revised", 10000, true);
         }
 
         #endregion
@@ -296,6 +297,7 @@ namespace PandaTeemo
             var qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var useQ = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
 
+            // Harass Logic
             if (Q.IsReady() && qtarget.IsValidTarget() && useQ && Q.IsInRange(qtarget))
             {
                 Q.Cast(qtarget, Packets);
@@ -303,16 +305,15 @@ namespace PandaTeemo
 
             // LastHit Logic
             double TeemoE = 0;
-            var t = TargetSelector.GetTarget((float)TeemoE, TargetSelector.DamageType.Physical);
-            TeemoE += Player.GetSpellDamage(t, SpellSlot.E);
 
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 Orbwalking.DisableNextAttack = true;
                 var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, 30, MinionTypes.All);
                 foreach (var minion in allMinions)
                 {
-                    if (minion.Health < ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE)
+                    TeemoE += Player.GetSpellDamage(minion, SpellSlot.E);
+                    if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE)
                     {
                         Orbwalking.DisableNextAttack = false;
                         Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
@@ -325,6 +326,8 @@ namespace PandaTeemo
                 Orbwalking.DisableNextAttack = false;
             }
 
+            return;
+
         }
 
         #endregion
@@ -333,6 +336,7 @@ namespace PandaTeemo
 
         static void LaneClear()
         {
+            // Removed Outdated Algorithms
             var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
             var allMinionsR = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, R.Range, MinionTypes.Melee);
             var rangedMinionsR = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, R.Range, MinionTypes.Ranged);
@@ -340,32 +344,37 @@ namespace PandaTeemo
             var r2Location = R.GetCircularFarmLocation(rangedMinionsR, R.Range);
             var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
             var useR = Config.SubMenu("LaneClear").Item("rclear").GetValue<bool>();
-            var bestLocation = (rLocation.MinionsHit > r2Location.MinionsHit) ? rLocation : r2Location;
             var minionR = Config.SubMenu("LaneClear").Item("minionR").GetValue<Slider>().Value;
 
-            // Reworked LaneClear Logic
-            if (allMinionsQ.Count > 0 && useQ || minionR <= allMinionsR.Count && useR || minionR <= rangedMinionsR.Count && useR || minionR <= allMinionsR.Count + rangedMinionsR.Count && useR)
+            // Fix LaneClear Bug
+            if (allMinionsQ.Count > 0 && useQ || minionR <= rLocation.MinionsHit && useR || minionR <= r2Location.MinionsHit && useR || minionR <= rLocation.MinionsHit + r2Location.MinionsHit && useR)
             {
-                foreach (var minion in allMinionsQ)
+                if (useQ)
                 {
-                    if (minion.Health < ObjectManager.Player.GetSpellDamage(minion, SpellSlot.Q) && Q.IsReady() && useQ)
+                    foreach (var minion in allMinionsQ)
                     {
-                        Q.CastOnUnit(minion, Packets);
-                        return;
+                        if (minion.Health < ObjectManager.Player.GetSpellDamage(minion, SpellSlot.Q) && Q.IsReady())
+                        {
+                            Q.CastOnUnit(minion, Packets);
+                            return;
+                        }
                     }
                 }
 
-                foreach (var minion in allMinionsR)
+                if (useR)
                 {
-                    if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()) && useR)
+                    foreach (var minion in allMinionsR)
                     {
-                        R.Cast(bestLocation.Position, true);
-                        return;
-                    }
-                    else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()) && useR)
-                    {
-                        R.Cast(bestLocation.Position, true);
-                        return;
+                        if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()) &&  minionR <= rLocation.MinionsHit)
+                        {
+                            R.Cast(rLocation.Position, Packets);
+                            return;
+                        }
+                        else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()) && minionR <= r2Location.MinionsHit)
+                        {
+                            R.Cast(r2Location.Position, Packets);
+                            return;
+                        }
                     }
                 }
             }
@@ -378,25 +387,27 @@ namespace PandaTeemo
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender,
             Interrupter2.InterruptableTargetEventArgs args)
         {
+            // Fixed Interrupt
+
             var intq = Config.SubMenu("Interrupt").Item("intq").GetValue<bool>();
             var intChance = Config.SubMenu("Interrupt").Item("intChance").GetValue<StringList>().SelectedValue;
 
             // High Danger Level
-            if (intChance.Contains("High") && intq && Q.IsReady() && args.DangerLevel != Interrupter2.DangerLevel.High)
+            if (intChance.Contains("High") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.High)
             {
                 Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
             }
 
             // Medium Danger Level
-            else if (intChance.Contains("Medium") && intq && Q.IsReady() && args.DangerLevel != Interrupter2.DangerLevel.Medium)
+            else if (intChance.Contains("Medium") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Medium)
             {
                 Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
             }
 
             // Low Danger Level
-            else if (intChance.Contains("Low") && intq && Q.IsReady() && args.DangerLevel != Interrupter2.DangerLevel.Low)
+            else if (intChance.Contains("Low") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Low)
             {
                 Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
@@ -416,9 +427,22 @@ namespace PandaTeemo
         {
             var autoRPanic = Config.SubMenu("Misc").Item("autoRPanic").IsActive();
 
+            // Panic Key now makes you move
+            if (autoRPanic)
+            {
+                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            }
+
             if (!R.IsReady() || Player.HasBuff("Recall") || autoRPanic)
             {
                 return;
+            }
+
+            // Zhonya / Recall Auto Shroom (Taken from Marksman)
+            var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
+            if (target.IsValidTarget(R.Range) && target.HasBuff("Recall") || target.HasBuff("zhonyasringshield"))
+            {
+                R.Cast(target.Position, Packets);
             }
 
             // Multi Map Support Shrooming
@@ -460,16 +484,13 @@ namespace PandaTeemo
         {
             double TeemoE = 0;
 
-            var t = TargetSelector.GetTarget((float)TeemoE, TargetSelector.DamageType.Physical);
-
-            TeemoE += Player.GetSpellDamage(t, SpellSlot.E);
-
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 Orbwalking.DisableNextAttack = true;
                 var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, 30, MinionTypes.All);
                 foreach (var minion in allMinions)
                 {
+                    TeemoE += Player.GetSpellDamage(minion, SpellSlot.E);
                     if (minion.Health < ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE)
                     {
                         Orbwalking.DisableNextAttack = false;
@@ -553,7 +574,9 @@ namespace PandaTeemo
         static void AutoW()
         {
             if (!W.IsReady())
-            { return; }
+            { 
+                return; 
+            }
 
             if (W.IsReady())
             {
@@ -581,7 +604,7 @@ namespace PandaTeemo
                 W.Cast();
             }
 
-            if (Q.IsReady() && allMinionsQ.Count >= 1)
+            if (Q.IsReady() && 1 <= allMinionsQ.Count)
             {
                 foreach (var minion in allMinionsQ)
                 {
@@ -591,7 +614,7 @@ namespace PandaTeemo
                     }
                 }
             }
-            else if (Q.IsReady() && Q.IsInRange(target) && target.IsValidTarget())
+            else if (Q.IsReady() && Q.IsInRange(target) && target.IsValidTarget() && 25 <= Player.ManaPercent)
             {
                 Q.Cast(target);
             }
@@ -626,18 +649,23 @@ namespace PandaTeemo
             switch (Orbwalker.ActiveMode)
             {
                 case Orbwalking.OrbwalkingMode.Combo:
+                    Orbwalking.DisableNextAttack = false;
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:
+                    Orbwalking.DisableNextAttack = false;
                     Harass();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
+                    Orbwalking.DisableNextAttack = false;
                     LastHit();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
+                    Orbwalking.DisableNextAttack = false;
                     LaneClear();
                     break;
                 case Orbwalking.OrbwalkingMode.None:
+                    Orbwalking.DisableNextAttack = false;
 
                     //Flee Menu
                     if (Config.SubMenu("Flee").Item("fleetoggle").IsActive())
@@ -703,9 +731,9 @@ namespace PandaTeemo
             if (drawrClear)
             {
                 // LaneClear R Location Drawing
-                var rLocation = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, R.Range, MinionTypes.Melee), R.Range);
-                var r2Location = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, R.Range, MinionTypes.Ranged), R.Range);
-                var bestLocation = rLocation.MinionsHit > r2Location.MinionsHit ? rLocation : r2Location;
+                var drawrclearRange = Config.SubMenu("Drawing").Item("drawrclearRange").GetValue<Slider>().Value;
+                var rLocation = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, drawrclearRange, MinionTypes.Melee));
+                var r2Location = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, drawrclearRange, MinionTypes.Ranged));
 
                 if (colorBlind)
                 {
