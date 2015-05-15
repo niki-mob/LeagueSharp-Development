@@ -177,7 +177,7 @@ namespace PandaTeemo
 
             if (t != null && (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo|| Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed))
             {
-                if (useQHarass && Q.IsReady() || useQCombo && Q.IsReady())
+                if (useQHarass && Q.IsReady() && Q.IsInRange(t) || useQCombo && Q.IsReady() && Q.IsInRange(t) && Player.AttackRange <= Q.Range)
                 {
                     Q.CastOnUnit(t, Packets);
                 }
@@ -232,10 +232,10 @@ namespace PandaTeemo
                 return;
             }
 
-            if (Q.IsReady() && useQ && qtarget.IsValidTarget())
+            /*if (Q.IsReady() && useQ && qtarget.IsValidTarget())
             {
                 Q.Cast(qtarget, Packets);
-            }
+            }*/
 
             if (R.IsReady() && useR && R.IsInRange(rtarget) && rCharge <= rCount && rtarget.IsValidTarget() && !IsShroomed(rtarget.Position))
             {
@@ -298,10 +298,10 @@ namespace PandaTeemo
             var useQ = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
 
             // Harass Logic
-            if (Q.IsReady() && qtarget.IsValidTarget() && useQ && Q.IsInRange(qtarget))
+            /*if (Q.IsReady() && qtarget.IsValidTarget() && useQ && Q.IsInRange(qtarget))
             {
                 Q.Cast(qtarget, Packets);
-            }
+            }*/
 
             // LastHit Logic
             double TeemoE = 0;
