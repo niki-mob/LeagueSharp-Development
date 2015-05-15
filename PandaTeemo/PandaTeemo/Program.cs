@@ -440,7 +440,7 @@ namespace PandaTeemo
 
             // Zhonya / Recall Auto Shroom (Taken from Marksman)
             var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
-            if (target.IsValidTarget(R.Range) && target.HasBuff("Recall") || target.HasBuff("zhonyasringshield"))
+            if (target.IsValidTarget(R.Range) && (target.HasBuff("Recall") || target.HasBuff("zhonyasringshield")) && R.IsReady() && R.IsInRange(target))
             {
                 R.Cast(target.Position, Packets);
             }
