@@ -111,6 +111,11 @@ namespace PandaTeemo
             SummonersRift.Add(new Vector3(10388f, 49.81641f, 3046f));
             SummonersRift.Add(new Vector3(9160f, 59.97022f, 2122f));
 
+            //Bot Lane Tri Bush
+            SummonersRift.Add(new Vector3(12518f, 53.66707f, 1504f));
+            SummonersRift.Add(new Vector3(13404f, 51.3669f, 2482f));
+            SummonersRift.Add(new Vector3(11854f, -68.06037f, 3922f));
+
             /// Howling Abyss
             
             // Blue Side
