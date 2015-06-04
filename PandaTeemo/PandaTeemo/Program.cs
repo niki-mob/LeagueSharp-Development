@@ -22,6 +22,7 @@ namespace PandaTeemo
         public static Spell E;
         public static Spell R;
         public static ShroomTables ShroomPositions;
+        public static FileHandler _FileHandler;
         
         // Orbwalker
         public static Orbwalking.Orbwalker Orbwalker;
@@ -104,6 +105,7 @@ namespace PandaTeemo
             laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(true));
             laneclear.AddItem(new MenuItem("qManaManager", "Q Mana Manager").SetValue(new Slider(75, 0, 100)));
             laneclear.AddItem(new MenuItem("attackTurret", "Attack Turret").SetValue(true));
+            laneclear.AddItem(new MenuItem("attackWard", "Attack Ward").SetValue(true));
             laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(true));
             laneclear.AddItem(new MenuItem("userKill", "Use R only if Killable").SetValue(false));
             laneclear.AddItem(new MenuItem("minionR", "Minion for R").SetValue(new Slider(3, 1, 4)));
@@ -148,7 +150,6 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
             // Events
-            ShroomPositions = new ShroomTables();
             Game.OnUpdate += Game_OnGameUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
@@ -158,7 +159,10 @@ namespace PandaTeemo
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.4.0.0", 10000, true);
+            Notifications.AddNotification("Version 1.6.0.0", 10000, true);
+
+            _FileHandler = new FileHandler();
+            ShroomPositions = new ShroomTables();
         }
 
         #endregion
@@ -177,13 +181,14 @@ namespace PandaTeemo
                     TeemoE += Player.GetSpellDamage(minion, SpellSlot.E);
                     var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
                     var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
+                    var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
 
-                    if (Player.GetAutoAttackDamage(minion) + TeemoE <= minion.Health || Q.GetDamage(minion) <= minion.Health)
+                    if (Player.GetAutoAttackDamage(minion, false) + TeemoE <= minion.Health || Q.GetDamage(minion) <= minion.Health)
                     {
                         args.Process = true;
                     }
 
-                    else if (minion.Health <= Player.GetAutoAttackDamage(minion) + TeemoE|| minion.Health <= Q.GetDamage(minion))
+                    else if (minion.Health <= Player.GetAutoAttackDamage(minion, false) + TeemoE || minion.Health <= Q.GetDamage(minion))
                     {
                         args.Process = false;
                         var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
@@ -224,7 +229,6 @@ namespace PandaTeemo
                         {
                             Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
                             args.Process = true;
-                            return;
                         }
 
                         /* inhibitor */
@@ -233,7 +237,6 @@ namespace PandaTeemo
                         {
                             Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
                             args.Process = true;
-                            return;
                         }
 
                         /* nexus */
@@ -242,7 +245,15 @@ namespace PandaTeemo
                         {
                             Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
                             args.Process = true;
-                            return;
+                        }
+                    }
+
+                    if (attackWard == true)
+                    {
+                        foreach(var ward in MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None))
+                        {
+                            Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
+                            args.Process = true;
                         }
                     }
 
