@@ -19,16 +19,27 @@ namespace PandaTeemo
         static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
         static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
 
-        public static string[] xString = File.ReadAllLines(xFile);
-        public static string[] zString = File.ReadAllLines(zFile);
-        public static string[] yString = File.ReadAllLines(yFile);
+        private static string[] xString = File.ReadAllLines(xFile);
+        private static string[] zString = File.ReadAllLines(zFile);
+        private static string[] yString = File.ReadAllLines(yFile);
 
+        /// <summary>
+        /// Array of X Int
+        /// </summary>
         public static int[] xInt = new int[xString.Count()];
+
+        /// <summary>
+        /// Array of Z Int
+        /// </summary>
         public static int[] zInt = new int[zString.Count()];
+
+        /// <summary>
+        /// Array of Y Int
+        /// </summary>
         public static int[] yInt = new int[yString.Count()];
 
         /// <summary>
-        /// Main
+        /// Initilize the FileHandler
         /// </summary>
         public FileHandler()
         {
@@ -36,12 +47,12 @@ namespace PandaTeemo
         }
 
         /// <summary>
-        /// Position of the Shroom
+        /// List of the Position of the Shroom
         /// </summary>
         public static List<Vector3> Position = new List<Vector3>();
 
         /// <summary>
-        /// Checks for missing files
+        /// Checks for missing files, Converts the values to int, then adds them into a Vector3 List
         /// </summary>
         public static void DoChecks()
         {
@@ -92,19 +103,16 @@ namespace PandaTeemo
             {
                 for (var i = 0; i < xString.Count(); i++)
                 {
-                    //Notifications.AddNotification("Converted xString", 10000, true);
                     xInt[i] = Convert.ToInt32(xString[i]);
                 }
 
                 for (var i = 0; i < xString.Count(); i++)
                 {
-                    //Notifications.AddNotification("Converted zString", 10000, true);
                     zInt[i] = Convert.ToInt32(zString[i]);
                 }
 
                 for (var i = 0; i < xString.Count(); i++)
                 {
-                    //Notifications.AddNotification("Converted yString", 10000, true);
                     yInt[i] = Convert.ToInt32(yString[i]);
                 }
 
@@ -114,7 +122,7 @@ namespace PandaTeemo
         }
         
         /// <summary>
-        /// Gets the location of the shroom
+        /// Gets the location of the shroom and adds it to the list
         /// </summary>
         public static void GetShroomLocation()
         {

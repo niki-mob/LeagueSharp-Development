@@ -21,6 +21,9 @@ namespace PandaTeemo
         public List<Vector3> CrystalScar = new List<Vector3>();
         public List<Vector3> TwistedTreeline = new List<Vector3>();
 
+        /// <summary>
+        /// Creates List for each map
+        /// </summary>
         public ShroomTables()
         {
             CreateTables();
@@ -136,6 +139,15 @@ namespace PandaTeemo
             }
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
             {
+                /// Custom List
+                if (FileHandler.xInt.Count() > 0)
+                {
+                    foreach (var pos in FileHandler.Position)
+                    {
+                        HowlingAbyss.Add(pos);
+                    }
+                }
+
                 /// Howling Abyss
 
                 // Blue Side
@@ -154,12 +166,30 @@ namespace PandaTeemo
             }
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
             {
+                /// Custom List
+                if (FileHandler.xInt.Count() > 0)
+                {
+                    foreach (var pos in FileHandler.Position)
+                    {
+                        CrystalScar.Add(pos);
+                    }
+                }
+
                 // Crystal Scar
 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
             {
+                /// Custom List
+                if (FileHandler.xInt.Count() > 0)
+                {
+                    foreach (var pos in FileHandler.Position)
+                    {
+                        TwistedTreeline.Add(pos);
+                    }
+                }
+
                 // Twisted Treeline
 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
