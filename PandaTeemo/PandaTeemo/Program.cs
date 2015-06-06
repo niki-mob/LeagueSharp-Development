@@ -12,43 +12,82 @@ namespace PandaTeemo
     {
         #region Initilization
 
+        /// <summary>
+        /// Teemo's Name
+        /// </summary>
         public const string ChampionName = "Teemo";
 
+        /// <summary>
+        /// Array of ADC Names
+        /// </summary>
         static string[] Marksman = { "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Jinx", "Kalista", "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Urgot", "Varus", "Vayne" };
 
-        //Spells
+        /// <summary>
+        /// Q
+        /// </summary>
         public static Spell Q;
+
+        /// <summary>
+        /// W
+        /// </summary>
         public static Spell W;
+
+        /// <summary>
+        /// E
+        /// </summary>
         public static Spell E;
+
+        /// <summary>
+        /// R
+        /// </summary>
         public static Spell R;
+
+
         public static ShroomTables ShroomPositions;
         public static FileHandler _FileHandler;
         
-        // Orbwalker
+        /// <summary>
+        /// Orbwalker
+        /// </summary>
         public static Orbwalking.Orbwalker Orbwalker;
 
-        // Menu
+        /// <summary>
+        /// Menu
+        /// </summary>
         public static Menu Config;
 
-        // Player
+        /// <summary>
+        /// Player
+        /// </summary>
         static Obj_AI_Hero Player
         {
             get { return ObjectManager.Player; }
         }
 
-        // Packets
+        /// <summary>
+        /// Packet Boolean
+        /// </summary>
         public static bool Packets
         {
             get { return Config.SubMenu("Misc").Item("packets").GetValue<bool>(); }
         }
 
+        /// <summary>
+        /// Called when program starts
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
+        /// <summary>
+        /// Loads when Game Starts
+        /// </summary>
+        /// <param name="args"></param>
         static void Game_OnGameLoad(EventArgs args)
         {
+            // Checks if Player is Teemo
             if (Player.BaseSkinName != ChampionName)
             {
                 Notifications.AddNotification(ChampionName + "is not supported", -1, false);
@@ -85,7 +124,6 @@ namespace PandaTeemo
             var drawing = Config.AddSubMenu(new Menu("Drawing", "Drawing"));
             var interrupt = Config.AddSubMenu(new Menu("Interrupt", "Interrupt & Gapcloser"));
             var misc = Config.AddSubMenu(new Menu("Misc", "Misc"));
-            //var console = Config.AddSubMenu(new Menu("Console", "Console"));
 
             // Main Menu
             Orbwalker = new Orbwalking.Orbwalker(orbwalking);
@@ -133,9 +171,6 @@ namespace PandaTeemo
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
 
-            // Output to Console Location
-            //console.AddItem(new MenuItem("Debug", "Debug").SetValue(new KeyBind(84, KeyBindType.Press)));
-
             // Flee Menu
             flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(90, KeyBindType.Press)));
             flee.AddItem(new MenuItem("w", "Use W while Flee").SetValue(true));
@@ -153,7 +188,7 @@ namespace PandaTeemo
             Game.OnUpdate += Game_OnGameUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Drawing.OnDraw += DrawingOnOnDraw;
+            Drawing.OnDraw += DrawingOnDraw;
             Orbwalking.AfterAttack += Orbwalking_AfterAttack;
             Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
 
@@ -161,6 +196,7 @@ namespace PandaTeemo
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
             Notifications.AddNotification("Version 1.6.0.0", 10000, true);
 
+            // Loads FileHandler and ShroomPosition
             _FileHandler = new FileHandler();
             ShroomPositions = new ShroomTables();
         }
@@ -169,6 +205,10 @@ namespace PandaTeemo
 
         #region BeforeAttack
 
+        /// <summary>
+        /// Actions before attacking
+        /// </summary>
+        /// <param name="args">Attack Action</param>
         static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
@@ -271,6 +311,10 @@ namespace PandaTeemo
 
         #region Gapcloser
 
+        /// <summary>
+        /// Gapcloser
+        /// </summary>
+        /// <param name="gapcloser"></param>
         static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             var gapR = Config.SubMenu("Interrupt").Item("gapR").GetValue<bool>();
@@ -286,6 +330,11 @@ namespace PandaTeemo
 
         #region AfterAttack
 
+        /// <summary>
+        /// Action after Attack
+        /// </summary>
+        /// <param name="unit">Unit Attacked</param>
+        /// <param name="target">Target Attacked</param>
         static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
         {
             // The following code is taken from Marksman
@@ -301,13 +350,9 @@ namespace PandaTeemo
                 {
                     foreach (var adc in Marksman)
                     {
-                        if (useQCombo && Q.IsReady() && Q.IsInRange(t) && Player.AttackRange <= Q.Range && t.BaseSkinName == adc)
+                        if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.BaseSkinName == adc)
                         {
                             Q.CastOnUnit(t, Packets);
-                        }
-                        else if (useQCombo && Q.IsReady() && Q.IsInRange(t) && Player.AttackRange <= Q.Range && t.BaseSkinName != adc)
-                        {
-                            return;
                         }
                         else
                         {
@@ -316,7 +361,7 @@ namespace PandaTeemo
                     }
                 }
 
-                if (useQCombo && Q.IsReady() && Q.IsInRange(t) && Player.AttackRange <= Q.Range)
+                if (useQCombo && Q.IsReady() && Q.IsInRange(t))
                 {
                     Q.CastOnUnit(t, Packets);
                 }
@@ -324,7 +369,7 @@ namespace PandaTeemo
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
-                if (useQHarass && Q.IsReady() && Q.IsInRange(t) && Player.AttackRange <= Q.Range)
+                if (useQHarass && Q.IsReady() && Q.IsInRange(t))
                 {
                     Q.CastOnUnit(t, Packets);
                 }
@@ -338,8 +383,8 @@ namespace PandaTeemo
         /// <summary>
         /// Checks if there is shroom in location
         /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
+        /// <param name="position">The location of check</param>
+        /// <returns>If location is shroomed or not</returns>
         static bool IsShroomed(Vector3 position)
         {
             return ObjectManager.Get<Obj_AI_Base>().Where(obj => obj.Name == "Noxious Trap").Any(obj => position.Distance(obj.Position) <= 250);
@@ -349,6 +394,9 @@ namespace PandaTeemo
 
         #region Combo
 
+        /// <summary>
+        /// Combo
+        /// </summary>
         static void Combo()
         {
             var target = TargetSelector.GetTarget(500, TargetSelector.DamageType.Physical);
@@ -394,6 +442,9 @@ namespace PandaTeemo
 
         #region KillSteal
 
+        /// <summary>
+        /// KillSteal
+        /// </summary>
         static void KS()
         {
             var aatarget = TargetSelector.GetTarget(500, TargetSelector.DamageType.Physical);
@@ -438,6 +489,9 @@ namespace PandaTeemo
 
         #region Harass
 
+        /// <summary>
+        /// Harass
+        /// </summary>
         static void Harass()
         {
             var qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
@@ -480,6 +534,9 @@ namespace PandaTeemo
 
         #region LaneClear
 
+        /// <summary>
+        /// LaneClear
+        /// </summary>
         static void LaneClear()
         {
             // Removed Outdated Algorithms
@@ -552,6 +609,9 @@ namespace PandaTeemo
 
         #region JungleClear
 
+        /// <summary>
+        /// JungleClear
+        /// </summary>
         static void JungleClear()
         {
             var useQ = Config.SubMenu("JungleClear").Item("qclear").GetValue<bool>();
@@ -594,6 +654,11 @@ namespace PandaTeemo
 
         #region Interrupt
 
+        /// <summary>
+        /// Interrupter
+        /// </summary>
+        /// <param name="sender">The Target</param>
+        /// <param name="args">Action</param>
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender,
             Interrupter2.InterruptableTargetEventArgs args)
         {
@@ -633,6 +698,9 @@ namespace PandaTeemo
 
         #region AutoShroom
         
+        /// <summary>
+        /// AutoShroom
+        /// </summary>
         static void AutoShroom()
         {
             var autoRPanic = Config.SubMenu("Misc").Item("autoRPanic").IsActive();
@@ -690,6 +758,9 @@ namespace PandaTeemo
 
         #region LastHit
 
+        /// <summary>
+        /// LastHit
+        /// </summary>
         static void LastHit()
         {
             double TeemoE = 0;
@@ -721,6 +792,9 @@ namespace PandaTeemo
 
         #region Flee
 
+        /// <summary>
+        /// Flee
+        /// </summary>
         static void Flee()
         {
             // Checks if toggle is on
@@ -748,6 +822,9 @@ namespace PandaTeemo
 
         #region Auto Q
 
+        /// <summary>
+        /// Auto Q
+        /// </summary>
         static void AutoQ()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
@@ -781,6 +858,9 @@ namespace PandaTeemo
 
         #region Auto W
 
+        /// <summary>
+        /// Auto W
+        /// </summary>
         static void AutoW()
         {
             if (!W.IsReady())
@@ -799,6 +879,9 @@ namespace PandaTeemo
 
         #region Auto Q & W
 
+        /// <summary>
+        /// Auto Q and W
+        /// </summary>
         static void AutoQW()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
@@ -836,6 +919,10 @@ namespace PandaTeemo
 
         #region Game_OnUpdate
 
+        /// <summary>
+        /// OnUpdate
+        /// </summary>
+        /// <param name="args"></param>
         static void Game_OnGameUpdate(EventArgs args)
         {
             var autoQ = Config.Item("autoQ").GetValue<bool>();
@@ -897,20 +984,17 @@ namespace PandaTeemo
 
                     break;
             }
-            // Debug
-            //if(Config.SubMenu("Console").Item("Debug").IsActive())
-            //{
-            //    Console.WriteLine(Player.Position.X + "is the X position");
-            //    Console.WriteLine(Player.Position.Y + "is the Y Position");
-            //    Console.WriteLine(Player.Position.Z + "is the Z Position");
-            //}
         }
 
         #endregion
 
         #region Drawing
 
-        static void DrawingOnOnDraw(EventArgs args)
+        /// <summary>
+        /// On Draw
+        /// </summary>
+        /// <param name="args"></param>
+        static void DrawingOnDraw(EventArgs args)
         {
             var drawQ = Config.SubMenu("Drawing").Item("drawQ").GetValue<bool>();
             var drawR = Config.SubMenu("Drawing").Item("drawR").GetValue<bool>();
