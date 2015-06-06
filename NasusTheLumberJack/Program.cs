@@ -112,6 +112,7 @@ namespace NasusTheLumberJack
             var harassMenu = new Menu("Harass Menu", "harass");
             harassMenu.AddItem(new MenuItem("useQHarass", "Use Q To Harass")).SetValue(false);
             harassMenu.AddItem(new MenuItem("useQHarass2", "Use Q To LastHit")).SetValue(true);
+            harassMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using Q").SetValue(new Slider(50, 0, 100)));
             harassMenu.AddItem(new MenuItem("useWHarass", "Use W")).SetValue(false);
             harassMenu.AddItem(new MenuItem("useEHarass", "Use E to Harass")).SetValue(false);
             Menu.AddSubMenu(harassMenu);
@@ -122,6 +123,11 @@ namespace NasusTheLumberJack
             laneClearMenu.AddItem(new MenuItem("laneclearE", "Use E")).SetValue(true);
             laneClearMenu.AddItem(new MenuItem("eKillOnly", "Use E only if killable")).SetValue(false);
             Menu.AddSubMenu(laneClearMenu);
+            
+            // Misc
+            var miscMenu = new Menu("Misc Menu", "misc");
+            miscMenu.AddItem(new MenuItem("aaDisable", "Disable AA if Q isn't active during LastHit and Mixed")).SetValue(false);
+            Menu.AddSubMenu(miscMenu);
 
             // Drawing
             var drawMenu = new Menu("Drawing", "Drawing");
@@ -129,7 +135,8 @@ namespace NasusTheLumberJack
             Menu.AddSubMenu(drawMenu);
             
             // Notification
-            Notifications.AddNotification("Nasus The Lumber Jack Loaded by KarmaPanda", 10000, true);
+            Notifications.AddNotification("Nasus The Lumber Jack", 10000, true);
+            Notifications.AddNotification("Version 1.0.1.0", 10000, true);
 
             Game.OnUpdate += Game_OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -154,6 +161,7 @@ namespace NasusTheLumberJack
             {
                 return;
             }
+
             else
             {
                 var useWCombo = Menu.SubMenu("combo").Item("useWCombo").GetValue<bool>();
@@ -229,7 +237,7 @@ namespace NasusTheLumberJack
             {
                 foreach(var minion in eMinion)
                 {
-                    if (minion.Health <= E.GetDamage(minion))
+                    if (minion.Health <= E.GetDamage(minion) && E.IsInRange(minion))
                     {
                         E.Cast(eLocation.Position);
                     }
@@ -240,7 +248,10 @@ namespace NasusTheLumberJack
             {
                 foreach (var minion in eMinion)
                 {
-                    E.Cast(eLocation.Position);
+                    if (E.IsInRange(minion))
+                    {
+                        E.Cast(eLocation.Position);
+                    }
                 }
             }
 
@@ -260,9 +271,6 @@ namespace NasusTheLumberJack
         static void Harass()
         {
             var useQHarass = Menu.SubMenu("harass").Item("useQHarass").GetValue<bool>();
-            var useQHarass2 = Menu.SubMenu("harass").Item("useQHarass2").GetValue<bool>();
-            var minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-            var manamanagerQ = Menu.SubMenu("lasthit").Item("manamanagerQ").GetValue<Slider>().Value;
             var useWHarass = Menu.SubMenu("harass").Item("useWHarass").GetValue<bool>();
             var useEHarass = Menu.SubMenu("harass").Item("useEHarass").GetValue<bool>();
 
@@ -274,18 +282,6 @@ namespace NasusTheLumberJack
                 {
                     Q.Cast();
                     Player.IssueOrder(GameObjectOrder.AttackUnit, target);
-                }
-            }
-
-            if (useQHarass2)
-            {
-                foreach (var minion in minionQ)
-                {
-                    if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) && Q.IsReady())
-                    {
-                        Q.Cast();
-                        Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                    }
                 }
             }
 
@@ -312,29 +308,6 @@ namespace NasusTheLumberJack
 
         #endregion
 
-        #region LastHit
-
-        static void LastHit()
-        {
-            var manamanagerQ = Menu.SubMenu("lasthit").Item("manamanagerQ").GetValue<Slider>().Value;
-            var useQLastHit = Menu.SubMenu("lasthit").Item("useQLastHit").GetValue<bool>();
-            var minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-
-            if (useQLastHit)
-            {
-                foreach (var minion in minionQ)
-                {
-                    if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) && Q.IsReady())
-                    {
-                        Q.Cast();
-                        Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                    }
-                }
-            }
-        }
-
-        #endregion
-
         #endregion
 
         #region OnUpdate
@@ -349,9 +322,6 @@ namespace NasusTheLumberJack
             {
                 case Orbwalking.OrbwalkingMode.Combo:
                     Combo();
-                    break;
-                case Orbwalking.OrbwalkingMode.LastHit:
-                    LastHit();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
                     LaneClear();
@@ -368,21 +338,113 @@ namespace NasusTheLumberJack
 
         static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            switch (Orbwalker.ActiveMode)
             {
-                var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
-                var useQCombo = Menu.SubMenu("combo").Item("useQCombo").GetValue<bool>();
+                #region Combo
 
-                if (target.IsValidTarget() && Q.IsInRange(target) && Q.IsReady() && useQCombo)
-                {
-                    Q.Cast();
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, target);
-                }
-            }
+                case Orbwalking.OrbwalkingMode.Combo:
+                    var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+                    var useQCombo = Menu.SubMenu("combo").Item("useQCombo").GetValue<bool>();
 
-            else
-            {
-                return;
+                    if (target.IsValidTarget() && Q.IsInRange(target) && Q.IsReady() && useQCombo)
+                    {
+                        Q.Cast();
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, target);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
+
+                #endregion
+
+                #region LastHit
+
+                case Orbwalking.OrbwalkingMode.LastHit:
+                    var useQLastHit = Menu.SubMenu("lasthit").Item("useQLastHit").GetValue<bool>();
+                    var aaDisable = Menu.SubMenu("misc").Item("aaDisable").GetValue<bool>();
+                    var manamanagerQ = Menu.SubMenu("lasthit").Item("manamanagerQ").GetValue<Slider>().Value;
+                    var minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+
+                    if (useQLastHit && aaDisable)
+                    {
+                        args.Process = false;
+                        foreach (var minion in minionQ)
+                        {
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            {
+                                Q.Cast();
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                                args.Process = true;
+                            }
+                        }
+                    }
+                    else if (useQLastHit)
+                    {
+                        foreach (var minion in minionQ)
+                        {
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            {
+                                Q.Cast();
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
+
+                #endregion
+
+                #region Mixed
+
+                case Orbwalking.OrbwalkingMode.Mixed:
+                    var useQHarass2 = Menu.SubMenu("harass").Item("useQHarass2").GetValue<bool>();
+                    aaDisable = Menu.SubMenu("misc").Item("aaDisable").GetValue<bool>();
+
+                    if (useQHarass2 && aaDisable)
+                    {
+                        args.Process = false;
+                        minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                        manamanagerQ = Menu.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
+
+                        foreach (var minion in minionQ)
+                        {
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            {
+                                Q.Cast();
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                                args.Process = true;
+                            }
+                        }
+                    }
+
+                    else if (useQHarass2)
+                    {
+                        minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                        manamanagerQ = Menu.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
+
+                        foreach (var minion in minionQ)
+                        {
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            {
+                                Q.Cast();
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        return;
+                    }
+
+                    break;
+
+                #endregion
             }
         }
 
