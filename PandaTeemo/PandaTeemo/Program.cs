@@ -170,6 +170,10 @@ namespace PandaTeemo
             drawing.AddItem(new MenuItem("colorBlind", "Colorblind Mode").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
+            var debug = drawing.AddSubMenu(new Menu("Debug", "debug"));
+            debug.AddItem(new MenuItem("debugdraw", "Draw Coords").SetValue(false));
+            debug.AddItem(new MenuItem("x", "Where to draw X").SetValue(new Slider(500, 0, 1920)));
+            debug.AddItem(new MenuItem("y", "Where to draw Y").SetValue(new Slider(500, 0, 1080)));
 
             // Flee Menu
             flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(90, KeyBindType.Press)));
@@ -1001,7 +1005,16 @@ namespace PandaTeemo
             var drawautoR = Config.SubMenu("Drawing").Item("drawautoR").GetValue<bool>();
             var drawrClear = Config.SubMenu("Drawing").Item("drawrClear").GetValue<bool>();
             var colorBlind = Config.SubMenu("Drawing").Item("colorBlind").GetValue<bool>();
+            var debug = Config.SubMenu("Drawing").SubMenu("debug").Item("debugdraw").GetValue<bool>();
+            var debugX = Config.SubMenu("Drawing").SubMenu("debug").Item("x").GetValue<Slider>().Value;
+            var debugY = Config.SubMenu("Drawing").SubMenu("debug").Item("y").GetValue<Slider>().Value;
             var player = ObjectManager.Player.Position;
+
+            // Debug Draw
+            if (debug)
+            {
+                Drawing.DrawText(debugX, debugY, System.Drawing.Color.Red, Player.ServerPosition.ToString());
+            }
 
             // Reworked Drawing Colors && Added ColorBlind Mode
             if (drawQ && colorBlind)
