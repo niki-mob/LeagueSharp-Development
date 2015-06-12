@@ -90,10 +90,10 @@ namespace PandaTeemo
             // Checks if Player is Teemo
             if (Player.BaseSkinName != ChampionName)
             {
-                Notifications.AddNotification(ChampionName + "is not supported", -1, false);
-                Notifications.AddNotification("To use this assembly, please use Teemo only", -1, false);
                 return;
             }
+
+            #region Menu
 
             // Spells
             Q = new Spell(SpellSlot.Q, 680);
@@ -132,6 +132,7 @@ namespace PandaTeemo
             combo.AddItem(new MenuItem("qcombo", "Use Q in Combo").SetValue(true));
             combo.AddItem(new MenuItem("wcombo", "Use W in Combo").SetValue(true));
             combo.AddItem(new MenuItem("rcombo", "Kite with R in Combo").SetValue(true));
+            combo.AddItem(new MenuItem("checkAA", "Check for AA Range before using Q").SetValue(true));
             combo.AddItem(new MenuItem("useqADC", "Use Q only on ADC during Combo").SetValue(false));
             combo.AddItem(new MenuItem("wCombat", "Use W if enemy is in range only").SetValue(false));
             combo.AddItem(new MenuItem("rCharge", "Charges of R before using R").SetValue(new Slider(2, 1, 3)));
@@ -170,6 +171,7 @@ namespace PandaTeemo
             drawing.AddItem(new MenuItem("colorBlind", "Colorblind Mode").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
+
             var debug = drawing.AddSubMenu(new Menu("Debug", "debug"));
             debug.AddItem(new MenuItem("debugdraw", "Draw Coords").SetValue(false));
             debug.AddItem(new MenuItem("x", "Where to draw X").SetValue(new Slider(500, 0, 1920)));
@@ -187,6 +189,8 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("autoR", "Auto Place Shrooms in Important Places").SetValue(true));
             misc.AddItem(new MenuItem("autoRPanic", "Panic Key for Auto R").SetValue(new KeyBind(84, KeyBindType.Press)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
+
+#endregion
 
             // Events
             Game.OnUpdate += Game_OnGameUpdate;
@@ -345,29 +349,65 @@ namespace PandaTeemo
             var useQCombo = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useQHarass = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
             var useqADC = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
+            var checkAA = Config.SubMenu("Combo").Item("checkAA").GetValue<bool>();
             var t = target as Obj_AI_Hero;
 
             // Added Q only on ADC to Combo Mode
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
-                if (useqADC)
+                if (checkAA)
                 {
-                    foreach (var adc in Marksman)
+                    if (useqADC)
                     {
-                        if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.BaseSkinName == adc)
+                        foreach (var adc in Marksman)
                         {
-                            Q.CastOnUnit(t, Packets);
-                        }
-                        else
-                        {
-                            return;
+                            if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180) && t.BaseSkinName == adc)
+                            {
+                                Q.CastOnUnit(t, Packets);
+                            }
+                            else
+                            {
+                                return;
+                            }
                         }
                     }
-                }
 
-                if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                    else if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180))
+                    {
+                        Q.CastOnUnit(t, Packets);
+                    }
+
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
                 {
-                    Q.CastOnUnit(t, Packets);
+                    if (useqADC)
+                    {
+                        foreach (var adc in Marksman)
+                        {
+                            if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.BaseSkinName == adc)
+                            {
+                                Q.CastOnUnit(t, Packets);
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                    }
+
+                    else if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                    {
+                        Q.CastOnUnit(t, Packets);
+                    }
+                    
+                    else
+                    {
+                        return;
+                    }
                 }
             }
 

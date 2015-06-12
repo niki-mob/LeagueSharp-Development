@@ -6,9 +6,8 @@ using LeagueSharp.Common;
 
 namespace PandaTeemo
 {
-    //The following code is taken from UC2's Teemo. All the shroom locations are modified in the recent update for better positioning.
-    //To add a shroom location, press T and look at the console for the X Y Z positions and copy the template below to add your own location.
-
+    //The following code is taken from UC2's Teemo. All the shroom locations are modified in the recent updates.
+    //To add a shroom location, go to LeagueSharp's AppData folder LSXXXXXXXX/PandaTeemo/Map Name/(xFile.txt, yFile.txt, zFile.txt) and modify the values to suite your needs.
     // REWORKED BY KARMAPANDA
 
     /// <summary>
@@ -16,9 +15,24 @@ namespace PandaTeemo
     /// </summary>
     internal class ShroomTables
     {
+        /// <summary>
+        /// List of Locations in Summoner's Rift
+        /// </summary>
         public List<Vector3> SummonersRift = new List<Vector3>();
+
+        /// <summary>
+        /// List of Locations in Howling Abyss
+        /// </summary>
         public List<Vector3> HowlingAbyss = new List<Vector3>();
+
+        /// <summary>
+        /// List of Location in Crystal Scar
+        /// </summary>
         public List<Vector3> CrystalScar = new List<Vector3>();
+
+        /// <summary>
+        /// List of Location in Twisted Treeline
+        /// </summary>
         public List<Vector3> TwistedTreeline = new List<Vector3>();
 
         /// <summary>
@@ -56,11 +70,14 @@ namespace PandaTeemo
             TwistedTreeline = list;
 
         }
+
         /// <summary>
         /// Adds Shroom Locations to the Game
         /// </summary>
-        public void CreateTables()
+        private void CreateTables()
         {
+            #region Summoner's Rift
+
             if (Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
             {
                 /// Custom List
@@ -137,6 +154,11 @@ namespace PandaTeemo
                 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
+
+            #endregion
+
+            #region Howling Abyss
+
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
             {
                 /// Custom List
@@ -164,6 +186,11 @@ namespace PandaTeemo
 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
+
+            #endregion
+
+            #region Crystal Scar
+
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
             {
                 /// Custom List
@@ -179,6 +206,11 @@ namespace PandaTeemo
 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
+
+            #endregion
+
+            #region Twisted Treeline
+
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
             {
                 /// Custom List
@@ -194,14 +226,17 @@ namespace PandaTeemo
 
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
+
+            #endregion
+
+            #region Unknown Map
+
             else
             {
                 Notifications.AddNotification("Shrooms Loaded", 10000, true);
             }
 
-
-            // Template
-            // MAP NAME.Add(new Vector3("X"f, "Z"f, "Y"f));
+            #endregion
         }
     }
 }

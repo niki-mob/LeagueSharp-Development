@@ -9,19 +9,48 @@ using SharpDX;
 namespace PandaTeemo
 {
     /// <summary>
-    /// Some part of the code is taken from AiM
+    /// FileHandler is fixed for Sandbox
     /// </summary>
     internal class FileHandler
     {
-        private static string ShroomLocation = LeagueSharp.Common.Config.AppDataDirectory + @"\PandaTeemo\";
+        #region Fields
 
+        /// <summary>
+        /// List of the Position of the Shroom
+        /// </summary>
+        public static List<Vector3> Position = new List<Vector3>();
+
+        static readonly string ShroomLocation = LeagueSharp.Common.Config.AppDataDirectory + @"\PandaTeemo\";
+
+        /// <summary>
+        /// File Location for X
+        /// </summary>
         static string xFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "xFile" + ".txt";
+
+        /// <summary>
+        /// File Location for Y
+        /// </summary>
         static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
+
+        /// <summary>
+        /// File Location for Z
+        /// </summary>
         static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
 
-        private static string[] xString = File.ReadAllLines(xFile);
-        private static string[] zString = File.ReadAllLines(zFile);
-        private static string[] yString = File.ReadAllLines(yFile);
+        /// <summary>
+        /// Array of X String
+        /// </summary>
+        static string[] xString = new string[xFile.Count()];
+
+        /// <summary>
+        /// Array of Z String
+        /// </summary>
+        static string[] zString = new string[zFile.Count()];
+
+        /// <summary>
+        /// Array of Y String
+        /// </summary>
+        static string[] yString = new string[yFile.Count()];
 
         /// <summary>
         /// Array of X Int
@@ -38,18 +67,19 @@ namespace PandaTeemo
         /// </summary>
         public static int[] yInt = new int[yString.Count()];
 
+#endregion
+
+        #region Methods
+
         /// <summary>
-        /// Initilize the FileHandler
+        /// Initialize the FileHandler
         /// </summary>
         public FileHandler()
         {
+            #region Initialize
             DoChecks();
+            #endregion
         }
-
-        /// <summary>
-        /// List of the Position of the Shroom
-        /// </summary>
-        public static List<Vector3> Position = new List<Vector3>();
 
         /// <summary>
         /// Checks for missing files, Converts the values to int, then adds them into a Vector3 List
@@ -65,71 +95,96 @@ namespace PandaTeemo
                 Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.HowlingAbyss);
                 Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.SummonersRift);
                 Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.TwistedTreeline);
+                CreateFile();
             }
 
-            else if (!File.Exists(xFile))
+            else if (!File.Exists(xFile) || !File.Exists(zFile) || !File.Exists(yFile))
             {
-                var newfile = File.Create(xFile);
-                newfile.Close();
-                var content = "0\n";
-                var seperator = new[] { "\n" };
-                var lines = content.Split(seperator, StringSplitOptions.None);
-                File.WriteAllLines(xFile, lines);
+                CreateFile();
+            }
+
+            else if (File.Exists(xFile) && File.Exists(zFile) && File.Exists(yFile))
+            {
+                ConvertToInt();
+            }
+
+            #endregion
+        }
+
+        /// <summary>
+        /// Creates Files that are missing
+        /// </summary>
+        static void CreateFile()
+        {
+            #region Create File
+
+            if (!File.Exists(xFile))
+            {
+                File.WriteAllText(xFile, "0");
             }
 
             else if (!File.Exists(yFile))
             {
-                var newfile = File.Create(yFile);
-                newfile.Close();
-                var content = "0\n";
-                var seperator = new[] { "\n" };
-                var lines = content.Split(seperator, StringSplitOptions.None);
-                File.WriteAllLines(yFile, lines);
+                File.WriteAllText(yFile, "0");
             }
 
             else if (!File.Exists(zFile))
             {
-                var newfile = File.Create(zFile);
-                newfile.Close();
-                var content = "0\n";
-                var seperator = new[] { "\n" };
-                var lines = content.Split(seperator, StringSplitOptions.None);
-                File.WriteAllLines(zFile, lines);
+                File.WriteAllText(zFile, "0");
             }
+
+            DoChecks();
 
             #endregion
-
-            else
-            {
-                for (var i = 0; i < xString.Count(); i++)
-                {
-                    xInt[i] = Convert.ToInt32(xString[i]);
-                }
-
-                for (var i = 0; i < xString.Count(); i++)
-                {
-                    zInt[i] = Convert.ToInt32(zString[i]);
-                }
-
-                for (var i = 0; i < xString.Count(); i++)
-                {
-                    yInt[i] = Convert.ToInt32(yString[i]);
-                }
-
-                GetShroomLocation();
-                Notifications.AddNotification("FileHandler Initialized", 10000, true);
-            }
         }
-        
+
         /// <summary>
         /// Gets the location of the shroom and adds it to the list
         /// </summary>
         public static void GetShroomLocation()
         {
+            #region Get Location
+
             for (var i = 0; i < xInt.Count(); i++)
             {
                 Position.Add(new Vector3(xInt[i], zInt[i], yInt[i]));
             }
+
+            #endregion
         }
+
+        /// <summary>
+        /// Converts String to Int
+        /// </summary>
+        static void ConvertToInt()
+        {
+            #region Convert to Int
+
+            xString = File.ReadAllLines(xFile);
+            yString = File.ReadAllLines(yFile);
+            zString = File.ReadAllLines(zFile);
+
+            for (var i = 0; i < xString.Count(); i++)
+            {
+                xInt[i] = Convert.ToInt32(xString[i]);
+            }
+
+            for (var i = 0; i < xString.Count(); i++)
+            {
+                zInt[i] = Convert.ToInt32(zString[i]);
+            }
+
+            for (var i = 0; i < xString.Count(); i++)
+            {
+                yInt[i] = Convert.ToInt32(yString[i]);
+            }
+
+            GetShroomLocation();
+            Notifications.AddNotification("FileHandler Initialized", 10000, true);
+
+            #endregion
+        }
+
+        #endregion
     }
 }
