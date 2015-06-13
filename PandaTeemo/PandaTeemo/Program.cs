@@ -42,7 +42,6 @@ namespace PandaTeemo
         /// </summary>
         public static Spell R;
 
-
         public static ShroomTables ShroomPositions;
         public static FileHandler _FileHandler;
         
@@ -166,8 +165,8 @@ namespace PandaTeemo
             // Drawing Menu
             drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(true));
             drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(true));
-            drawing.AddItem(new MenuItem("drawrClear", "Draw where to place R while LaneClear").SetValue(true));
-            drawing.AddItem(new MenuItem("drawrclearRange", "Draw R LaneClear Range").SetValue(new Slider(1500, 2500, 1000)));
+            //drawing.AddItem(new MenuItem("drawrClear", "Draw where to place R while LaneClear").SetValue(true));
+            //drawing.AddItem(new MenuItem("drawrclearRange", "Draw R LaneClear Range").SetValue(new Slider(1500, 2500, 1000)));
             drawing.AddItem(new MenuItem("colorBlind", "Colorblind Mode").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
@@ -188,9 +187,10 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("autoW", "Automatic W").SetValue(false));
             misc.AddItem(new MenuItem("autoR", "Auto Place Shrooms in Important Places").SetValue(true));
             misc.AddItem(new MenuItem("autoRPanic", "Panic Key for Auto R").SetValue(new KeyBind(84, KeyBindType.Press)));
+            misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
-#endregion
+            #endregion
 
             // Events
             Game.OnUpdate += Game_OnGameUpdate;
@@ -202,7 +202,7 @@ namespace PandaTeemo
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.6.0.0", 10000, true);
+            Notifications.AddNotification("Version 1.6.5.1", 10000, true);
 
             // Loads FileHandler and ShroomPosition
             _FileHandler = new FileHandler();
@@ -231,8 +231,47 @@ namespace PandaTeemo
                     var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
                     var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
 
+                    // Hotfix for Attacking Turrets and Wards
                     if (Player.GetAutoAttackDamage(minion, false) + TeemoE <= minion.Health || Q.GetDamage(minion) <= minion.Health)
                     {
+                        // TODO -- Test if this works.
+                        if (attackTurret)
+                        {
+                            /* turrets */
+                            foreach (var turret in
+                                ObjectManager.Get<Obj_AI_Turret>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
+                                args.Process = true;
+                            }
+
+                            /* inhibitor */
+                            foreach (var turret in
+                                ObjectManager.Get<Obj_BarracksDampener>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
+                                args.Process = true;
+                            }
+
+                            /* nexus */
+                            foreach (var nexus in
+                                ObjectManager.Get<Obj_HQ>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
+                                args.Process = true;
+                            }
+                        }
+
+                        if (attackWard)
+                        {
+                            /* ward */
+                            foreach (var ward in MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None))
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
+                                args.Process = true;
+                            }
+                        }
+
                         args.Process = true;
                     }
 
@@ -247,6 +286,7 @@ namespace PandaTeemo
                                 Q.CastOnUnit(minion, Packets);
                                 args.Process = true;
                             }
+
                             else if (Player.Distance3D(minion) <= Player.AttackRange)
                             {
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
@@ -265,52 +305,15 @@ namespace PandaTeemo
                     else
                     {
                         args.Process = true;
-                        continue;
+                        return;
                     }
-
-                    // Taken from Orbwalker
-                    if (attackTurret == true)
-                    {
-                        /* turrets */
-                        foreach (var turret in
-                            ObjectManager.Get<Obj_AI_Turret>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
-                            args.Process = true;
-                        }
-
-                        /* inhibitor */
-                        foreach (var turret in
-                            ObjectManager.Get<Obj_BarracksDampener>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
-                            args.Process = true;
-                        }
-
-                        /* nexus */
-                        foreach (var nexus in
-                            ObjectManager.Get<Obj_HQ>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t)))
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
-                            args.Process = true;
-                        }
-                    }
-
-                    if (attackWard == true)
-                    {
-                        foreach(var ward in MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None))
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
-                            args.Process = true;
-                        }
-                    }
-
                 }
             }
 
             else
             {
                 args.Process = true;
+                return;
             }
 
         }
@@ -498,35 +501,53 @@ namespace PandaTeemo
             var KSR = Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>();
             var KSAA = Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>();
 
-            double TeemoE = 0;
-            TeemoE += Player.GetSpellDamage(aatarget, SpellSlot.E);
-
-            if (aatarget.Health <= TeemoE && KSAA)
+            if (KSAA)
             {
-                if (Q.IsReady() && Q.Delay + Q.ChargeDuration < Player.AttackCastDelay + Player.AttackDelay && KSQ && qtarget.IsValidTarget() && qtarget.Health <= Q.GetDamage(qtarget) && Q.IsInRange(qtarget))
+                double TeemoE = 0;
+                TeemoE += Player.GetSpellDamage(aatarget, SpellSlot.E);
+
+                if (aatarget.Health <= TeemoE)
                 {
-                    Q.CastOnUnit(qtarget, Packets);
+                    if (Q.IsReady() && 
+                        Q.Delay + Q.ChargeDuration < Player.AttackCastDelay + Player.AttackDelay && 
+                        KSQ && qtarget.IsValidTarget() && qtarget.Health <= Q.GetDamage(qtarget) && 
+                        Q.IsInRange(qtarget))
+                    {
+                        Q.CastOnUnit(qtarget, Packets);
+                    }
+                    else
+                    {
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, aatarget);
+                    }
+                }
+            }
+
+            if (KSR)
+            {
+                if (R.IsReady() && rtarget.IsValidTarget())
+                {
+                    if (rtarget.Health <= R.GetDamage(rtarget) &&
+                        !Q.IsReady() && R.IsInRange(rtarget) &&
+                        KSQ)
+                    {
+                        R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
+                    }
+                    else if (rtarget.Health <= R.GetDamage(rtarget) &&
+                        R.IsInRange(rtarget) &&
+                        !KSQ)
+                    {
+                        R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
+                    }
                 }
                 else
                 {
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, aatarget);
+                    return;
                 }
             }
-
-            if (R.IsReady() && rtarget.IsValidTarget() && KSR)
+            else
             {
-                if (rtarget.Health <= R.GetDamage(rtarget) && !Q.IsReady() && R.IsInRange(rtarget) && KSQ)
-                {
-                    R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
-                }
-                else if (rtarget.Health <= R.GetDamage(rtarget) && R.IsInRange(rtarget) && !KSQ)
-                {
-                    R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
-                }
+                return;
             }
-
-            return;
-
         }
 
         #endregion
@@ -1075,7 +1096,7 @@ namespace PandaTeemo
                 Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
             }
 
-            if (drawrClear)
+            /*if (drawrClear)
             {
                 // LaneClear R Location Drawing
                 var drawrclearRange = Config.SubMenu("Drawing").Item("drawrclearRange").GetValue<Slider>().Value;
@@ -1092,7 +1113,7 @@ namespace PandaTeemo
                     Render.Circle.DrawCircle(rLocation.Position.To3D(), 100, System.Drawing.Color.Green);
                     Render.Circle.DrawCircle(r2Location.Position.To3D(), 100, System.Drawing.Color.Green);
                 }
-            }
+            }*/
 
             // Multi Map Support Drawing
 

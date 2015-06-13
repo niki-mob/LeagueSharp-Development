@@ -81,7 +81,8 @@ namespace PandaTeemo
             if (Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
             {
                 /// Custom List
-                if (FileHandler.xInt.Count() > 0)
+                if (FileHandler.Position.Count() > 0 &&
+                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -162,7 +163,8 @@ namespace PandaTeemo
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
             {
                 /// Custom List
-                if (FileHandler.xInt.Count() > 0)
+                if (FileHandler.Position.Count() > 0 &&
+                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -194,7 +196,8 @@ namespace PandaTeemo
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
             {
                 /// Custom List
-                if (FileHandler.xInt.Count() > 0)
+                if (FileHandler.Position.Count() > 0 &&
+                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -214,7 +217,8 @@ namespace PandaTeemo
             else if (Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
             {
                 /// Custom List
-                if (FileHandler.xInt.Count() > 0)
+                if (FileHandler.Position.Count() > 0 &&
+                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
