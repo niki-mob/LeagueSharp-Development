@@ -8,7 +8,7 @@ namespace PandaTeemo
 {
     //The following code is taken from UC2's Teemo. All the shroom locations are modified in the recent updates.
     //To add a shroom location, go to LeagueSharp's AppData folder LSXXXXXXXX/PandaTeemo/Map Name/(xFile.txt, yFile.txt, zFile.txt) and modify the values to suite your needs.
-    // REWORKED BY KARMAPANDA
+    //REWORKED BY KARMAPANDA
 
     /// <summary>
     /// Shroom Locations

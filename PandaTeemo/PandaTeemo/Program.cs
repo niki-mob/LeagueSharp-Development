@@ -105,7 +105,6 @@ namespace PandaTeemo
 
             // Menu
             Config = new Menu("PandaTeemo", "PandaTeemo", true);
-            Config.AddToMainMenu();
 
             // TargetSelector
             var targetSelectorMenu = new Menu("Target Selector", "Target Selector");
@@ -190,6 +189,8 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
+            Config.AddToMainMenu();
+
             #endregion
 
             // Events
@@ -202,7 +203,7 @@ namespace PandaTeemo
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.6.5.1", 10000, true);
+            Notifications.AddNotification("Version 1.6.5.2", 10000, true);
 
             // Loads FileHandler and ShroomPosition
             _FileHandler = new FileHandler();
@@ -366,7 +367,7 @@ namespace PandaTeemo
                         {
                             if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180) && t.BaseSkinName == adc)
                             {
-                                Q.CastOnUnit(t, Packets);
+                                Q.CastIfWillHit(t, 1, Packets);
                             }
                             else
                             {
@@ -377,7 +378,7 @@ namespace PandaTeemo
 
                     else if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180))
                     {
-                        Q.CastOnUnit(t, Packets);
+                        Q.CastIfWillHit(t, 1, Packets);
                     }
 
                     else
@@ -393,7 +394,7 @@ namespace PandaTeemo
                         {
                             if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.BaseSkinName == adc)
                             {
-                                Q.CastOnUnit(t, Packets);
+                                Q.CastIfWillHit(t, 1, Packets);
                             }
                             else
                             {
@@ -404,7 +405,7 @@ namespace PandaTeemo
 
                     else if (useQCombo && Q.IsReady() && Q.IsInRange(t))
                     {
-                        Q.CastOnUnit(t, Packets);
+                        Q.CastIfWillHit(t, 1, Packets);
                     }
                     
                     else
@@ -418,7 +419,7 @@ namespace PandaTeemo
             {
                 if (useQHarass && Q.IsReady() && Q.IsInRange(t))
                 {
-                    Q.CastOnUnit(t, Packets);
+                    Q.CastIfWillHit(t, 1, Packets);
                 }
             }
         }
@@ -1042,7 +1043,7 @@ namespace PandaTeemo
                     }
 
                     //KillSteal
-                    if (Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>() || Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>())
+                    if (Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>() || Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>() || Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>())
                     {
                         KS();
                     }
