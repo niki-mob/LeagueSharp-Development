@@ -7,6 +7,7 @@ using LeagueSharp.Common.Data;
 using SharpDX;
 using GodlikeSkillz.Evade;
 using Color = System.Drawing.Color;
+using ItemData = LeagueSharp.Common.Data.ItemData;
 #endregion
 
 namespace GodlikeSkillz

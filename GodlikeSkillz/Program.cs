@@ -8,6 +8,7 @@ using LeagueSharp.Common;
 using LeagueSharp.Common.Data;
 using Menu = LeagueSharp.Common.Menu;
 using MenuItem = LeagueSharp.Common.MenuItem;
+using ItemData = LeagueSharp.Common.Data.ItemData;
 
 
 namespace GodlikeSkillz
