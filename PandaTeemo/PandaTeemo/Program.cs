@@ -87,7 +87,7 @@ namespace PandaTeemo
         static void Game_OnGameLoad(EventArgs args)
         {
             // Checks if Player is Teemo
-            if (Player.BaseSkinName != ChampionName)
+            if (Player.CharData.BaseSkinName != ChampionName)
             {
                 return;
             }
@@ -365,7 +365,7 @@ namespace PandaTeemo
                     {
                         foreach (var adc in Marksman)
                         {
-                            if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180) && t.BaseSkinName == adc)
+                            if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180) && t.CharData.BaseSkinName == adc)
                             {
                                 Q.CastIfWillHit(t, 1, Packets);
                             }
@@ -392,7 +392,7 @@ namespace PandaTeemo
                     {
                         foreach (var adc in Marksman)
                         {
-                            if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.BaseSkinName == adc)
+                            if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.CharData.BaseSkinName == adc)
                             {
                                 Q.CastIfWillHit(t, 1, Packets);
                             }
