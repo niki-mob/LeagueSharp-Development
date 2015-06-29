@@ -194,20 +194,131 @@ namespace PandaTeemo
             #endregion
 
             // Events
-            Game.OnUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Drawing.OnDraw += DrawingOnDraw;
             Orbwalking.AfterAttack += Orbwalking_AfterAttack;
             Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
+            Drawing.OnDraw += Drawing_OnDraw;
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.6.5.2", 10000, true);
+            Notifications.AddNotification("Version 1.6.5.3", 10000, true);
 
             // Loads FileHandler and ShroomPosition
             _FileHandler = new FileHandler();
             ShroomPositions = new ShroomTables();
+        }
+
+        static void Drawing_OnDraw(EventArgs args)
+        {
+            #region Debug
+
+            if (Config.SubMenu("Drawing").SubMenu("debug").Item("debugdraw").GetValue<bool>())
+            {
+                Drawing.DrawText(
+                    Config.SubMenu("Drawing").SubMenu("debug").Item("x").GetValue<Slider>().Value, 
+                    Config.SubMenu("Drawing").SubMenu("debug").Item("y").GetValue<Slider>().Value, 
+                    System.Drawing.Color.Red, 
+                    Player.ServerPosition.ToString());
+            }
+
+            #endregion
+
+            #region Skills
+
+            var drawQ = Config.SubMenu("Drawing").Item("drawQ").GetValue<bool>();
+            var drawR = Config.SubMenu("Drawing").Item("drawR").GetValue<bool>();
+            var colorBlind = Config.SubMenu("Drawing").Item("colorBlind").GetValue<bool>();
+            var player = ObjectManager.Player.Position;
+
+            if (drawQ && colorBlind)
+            {
+                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+            }
+
+            if (drawQ && !colorBlind)
+            {
+                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+            }
+
+            if (drawR && colorBlind)
+            {
+                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+            }
+
+            if (drawR && !colorBlind)
+            {
+                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+            }
+
+            #endregion
+
+            #region R Location
+
+            var drawautoR = Config.SubMenu("Drawing").Item("drawautoR").GetValue<bool>();
+
+            if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
+            {
+                foreach (var place in ShroomPositions.SummonersRift.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
+                {
+                    if (colorBlind)
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                    }
+                    else
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                    }
+                }
+            }
+
+            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
+            {
+                foreach (var place in ShroomPositions.CrystalScar.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
+                {
+                    if (colorBlind)
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                    }
+                    else
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                    }
+                }
+            }
+
+            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
+            {
+                foreach (var place in ShroomPositions.HowlingAbyss.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
+                {
+                    if (colorBlind)
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                    }
+                    else
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                    }
+                }
+            }
+
+            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
+            {
+                foreach (var place in ShroomPositions.TwistedTreeline.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
+                {
+                    if (colorBlind)
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                    }
+                    else
+                    {
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                    }
+                }
+            }
+
+            #endregion
         }
 
         #endregion
@@ -989,7 +1100,7 @@ namespace PandaTeemo
         /// OnUpdate
         /// </summary>
         /// <param name="args"></param>
-        static void Game_OnGameUpdate(EventArgs args)
+        static void Game_OnUpdate(EventArgs args)
         {
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
@@ -1051,152 +1162,6 @@ namespace PandaTeemo
                     break;
             }
         }
-
         #endregion
-
-        #region Drawing
-
-        /// <summary>
-        /// On Draw
-        /// </summary>
-        /// <param name="args"></param>
-        static void DrawingOnDraw(EventArgs args)
-        {
-            var drawQ = Config.SubMenu("Drawing").Item("drawQ").GetValue<bool>();
-            var drawR = Config.SubMenu("Drawing").Item("drawR").GetValue<bool>();
-            var drawautoR = Config.SubMenu("Drawing").Item("drawautoR").GetValue<bool>();
-            var drawrClear = Config.SubMenu("Drawing").Item("drawrClear").GetValue<bool>();
-            var colorBlind = Config.SubMenu("Drawing").Item("colorBlind").GetValue<bool>();
-            var debug = Config.SubMenu("Drawing").SubMenu("debug").Item("debugdraw").GetValue<bool>();
-            var debugX = Config.SubMenu("Drawing").SubMenu("debug").Item("x").GetValue<Slider>().Value;
-            var debugY = Config.SubMenu("Drawing").SubMenu("debug").Item("y").GetValue<Slider>().Value;
-            var player = ObjectManager.Player.Position;
-
-            // Debug Draw
-            if (debug)
-            {
-                Drawing.DrawText(debugX, debugY, System.Drawing.Color.Red, Player.ServerPosition.ToString());
-            }
-
-            // Reworked Drawing Colors && Added ColorBlind Mode
-            if (drawQ && colorBlind)
-            {
-                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
-            }
-            else if (drawQ)
-            {
-                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
-            }
-
-            if (drawR && colorBlind)
-            {
-                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
-            }
-            else if (drawR)
-            {
-                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
-            }
-
-            /*if (drawrClear)
-            {
-                // LaneClear R Location Drawing
-                var drawrclearRange = Config.SubMenu("Drawing").Item("drawrclearRange").GetValue<Slider>().Value;
-                var rLocation = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, drawrclearRange, MinionTypes.Melee));
-                var r2Location = R.GetCircularFarmLocation(MinionManager.GetMinions(ObjectManager.Player.ServerPosition, drawrclearRange, MinionTypes.Ranged));
-
-                if (colorBlind)
-                {
-                    Render.Circle.DrawCircle(rLocation.Position.To3D(), 100, System.Drawing.Color.YellowGreen);
-                    Render.Circle.DrawCircle(r2Location.Position.To3D(), 100, System.Drawing.Color.YellowGreen);
-                }
-                else
-                {
-                    Render.Circle.DrawCircle(rLocation.Position.To3D(), 100, System.Drawing.Color.Green);
-                    Render.Circle.DrawCircle(r2Location.Position.To3D(), 100, System.Drawing.Color.Green);
-                }
-            }*/
-
-            // Multi Map Support Drawing
-
-            if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
-            {
-                foreach (var place in ShroomPositions.SummonersRift.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
-                {
-                    if(IsShroomed(place))
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);
-                    }
-                    else if (!IsShroomed(place) && colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.YellowGreen);
-                    }
-                    else if (!IsShroomed(place) && !colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Green);
-                    }
-                }
-            }
-
-            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
-            {
-                //WIP
-                foreach (var place in ShroomPositions.CrystalScar.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
-                {
-                    if (IsShroomed(place))
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);
-                    }
-                    else if (!IsShroomed(place) && colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.YellowGreen);
-                    }
-                    else if (!IsShroomed(place) && !colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Green);
-                    }
-                }
-            }
-
-            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
-            {
-                foreach (var place in ShroomPositions.HowlingAbyss.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
-                {
-                    if (IsShroomed(place))
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);
-                    }
-                    else if (!IsShroomed(place) && colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.YellowGreen);
-                    }
-                    else if (!IsShroomed(place) && !colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Green);
-                    }
-                }
-            }
-
-            else if (drawautoR && Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
-            {
-                // WIP
-                foreach (var place in ShroomPositions.TwistedTreeline.Where(pos => pos.Distance(ObjectManager.Player.Position) <= Config.SubMenu("Drawing").Item("DrawVision").GetValue<Slider>().Value))
-                {
-                    if (IsShroomed(place))
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Red);
-                    }
-                    else if (!IsShroomed(place) && colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.YellowGreen);
-                    }
-                    else if (!IsShroomed(place) && !colorBlind)
-                    {
-                        Render.Circle.DrawCircle(place, 100, System.Drawing.Color.Green);
-                    }
-                }
-            }
-
-        #endregion
-        }
     }
 }
