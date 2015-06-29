@@ -120,17 +120,17 @@ namespace PandaTeemo
 
             if (!File.Exists(xFile))
             {
-                File.WriteAllText(xFile, "0");
+                File.WriteAllText(xFile, "5020");
             }
 
             else if (!File.Exists(yFile))
             {
-                File.WriteAllText(yFile, "0");
+                File.WriteAllText(yFile, "8430");
             }
 
             else if (!File.Exists(zFile))
             {
-                File.WriteAllText(zFile, "0");
+                File.WriteAllText(zFile, "2");
             }
 
             DoChecks();

@@ -150,6 +150,7 @@ namespace PandaTeemo
             // JungleClear Menu
             jungleclear.AddItem(new MenuItem("qclear", "JungleClear with Q").SetValue(true));
             jungleclear.AddItem(new MenuItem("rclear", "JungleClear with R").SetValue(true));
+            jungleclear.AddItem(new MenuItem("attackJungle", "Attack Jungle Creeps").SetValue(true));
 
             // Interrupter && Gapcloser
             interrupt.AddItem(new MenuItem("intq", "Interrupt with Q").SetValue(true));
@@ -164,8 +165,6 @@ namespace PandaTeemo
             // Drawing Menu
             drawing.AddItem(new MenuItem("drawQ", "Draw Q Range").SetValue(true));
             drawing.AddItem(new MenuItem("drawR", "Draw R Range").SetValue(true));
-            //drawing.AddItem(new MenuItem("drawrClear", "Draw where to place R while LaneClear").SetValue(true));
-            //drawing.AddItem(new MenuItem("drawrclearRange", "Draw R LaneClear Range").SetValue(new Slider(1500, 2500, 1000)));
             drawing.AddItem(new MenuItem("colorBlind", "Colorblind Mode").SetValue(false));
             drawing.AddItem(new MenuItem("drawautoR", "Draw Important Shroom Areas").SetValue(true));
             drawing.AddItem(new MenuItem("DrawVision", "Shroom Vision").SetValue(new Slider(1500, 2500, 1000)));
@@ -176,7 +175,7 @@ namespace PandaTeemo
             debug.AddItem(new MenuItem("y", "Where to draw Y").SetValue(new Slider(500, 0, 1080)));
 
             // Flee Menu
-            flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(90, KeyBindType.Press)));
+            flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(65, KeyBindType.Press)));
             flee.AddItem(new MenuItem("w", "Use W while Flee").SetValue(true));
             flee.AddItem(new MenuItem("r", "Use R while Flee").SetValue(true));
             flee.AddItem(new MenuItem("rCharge", "Charges of R before using R").SetValue(new Slider(2, 1, 3)));
@@ -203,7 +202,7 @@ namespace PandaTeemo
 
             // Notification (Replacement for PrintChat)
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.6.5.3", 10000, true);
+            Notifications.AddNotification("Version 1.6.5.4", 10000, true);
 
             // Loads FileHandler and ShroomPosition
             _FileHandler = new FileHandler();
@@ -335,18 +334,19 @@ namespace PandaTeemo
             {
                 args.Process = false;
 
-                foreach (var minion in MinionManager.GetMinions(Player.AttackRange, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health))
+                foreach (var minion in MinionManager.GetMinions(Player.AttackRange, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health))
                 {
                     double TeemoE = 0;
                     TeemoE += Player.GetSpellDamage(minion, SpellSlot.E);
                     var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
                     var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
                     var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
+                    var attackJungle = Config.SubMenu("JungleClear").Item("attackJungle").GetValue<bool>();
 
-                    // Hotfix for Attacking Turrets and Wards
-                    if (Player.GetAutoAttackDamage(minion, false) + TeemoE <= minion.Health || Q.GetDamage(minion) <= minion.Health)
+                    // Hotfix for Attacking Turrets and Wards and Jungle Creeps
+                    // Taken from Orbwalker
+                    if (Player.GetAutoAttackDamage(minion, false) + TeemoE < minion.Health || Q.GetDamage(minion) < minion.Health)
                     {
-                        // TODO -- Test if this works.
                         if (attackTurret)
                         {
                             /* turrets */
@@ -372,6 +372,17 @@ namespace PandaTeemo
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
                                 args.Process = true;
                             }
+                        }
+
+                        if (attackJungle)
+                        {
+                            /* jungle */
+                            var JungleCreep = ObjectManager.Get<Obj_AI_Minion>().Where(creep => creep.IsValidTarget() && 
+                                Orbwalking.InAutoAttackRange(creep) && 
+                                creep.Team == GameObjectTeam.Neutral).MaxOrDefault(mob => mob.MaxHealth);
+
+                            Player.IssueOrder(GameObjectOrder.AttackUnit, JungleCreep);
+                            args.Process = true;
                         }
 
                         if (attackWard)
