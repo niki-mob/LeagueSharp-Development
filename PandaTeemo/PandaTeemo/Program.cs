@@ -345,8 +345,21 @@ namespace PandaTeemo
 
                     // Hotfix for Attacking Turrets and Wards and Jungle Creeps
                     // Taken from Orbwalker
-                    if (Player.GetAutoAttackDamage(minion, false) + TeemoE < minion.Health || Q.GetDamage(minion) < minion.Health)
+                    if (Player.GetAutoAttackDamage(minion, false) + TeemoE <= minion.Health || Q.GetDamage(minion) <= minion.Health)
                     {
+                        if (attackJungle)
+                        {
+                            foreach (var jungle in
+                                ObjectManager.Get<Obj_AI_Minion>().Where(creep => 
+                                    creep.IsValidTarget() &&
+                                    Orbwalking.InAutoAttackRange(creep) &&
+                                    creep.Team == GameObjectTeam.Neutral))
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, jungle);
+                                args.Process = true;
+                            }
+                        }
+
                         if (attackTurret)
                         {
                             /* turrets */
@@ -374,17 +387,6 @@ namespace PandaTeemo
                             }
                         }
 
-                        if (attackJungle)
-                        {
-                            /* jungle */
-                            var JungleCreep = ObjectManager.Get<Obj_AI_Minion>().Where(creep => creep.IsValidTarget() && 
-                                Orbwalking.InAutoAttackRange(creep) && 
-                                creep.Team == GameObjectTeam.Neutral).MaxOrDefault(mob => mob.MaxHealth);
-
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, JungleCreep);
-                            args.Process = true;
-                        }
-
                         if (attackWard)
                         {
                             /* ward */
@@ -395,6 +397,8 @@ namespace PandaTeemo
                             }
                         }
 
+
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                         args.Process = true;
                     }
 
