@@ -33,10 +33,22 @@ namespace AutoFF
         static void Game_OnUpdate(EventArgs args)
         {
             var time = Config.Item("time").GetValue<Slider>().Value;
+            var surrender = false;
+            var surrendertime = 0;
 
-            if (Game.ClockTime >= time * 60 && Config.Item("toggle").GetValue<bool>())
+            if (surrender)
+            {
+                surrendertime += 1;
+                if (surrendertime >= 3000)
+                {
+                    surrender = false;
+                }
+            }
+
+            if (Game.ClockTime >= time * 60 && Config.Item("toggle").GetValue<bool>() && !surrender)
             {
                 Game.Say("/ff");
+                surrender = true;
             }
             else
             {
