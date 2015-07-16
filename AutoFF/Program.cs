@@ -34,7 +34,7 @@ namespace AutoFF
         {
             var time = Config.Item("time").GetValue<Slider>().Value;
 
-            if (Game.ClockTime >= time && Config.Item("toggle").GetValue<bool>())
+            if (Game.ClockTime >= time * 60 && Config.Item("toggle").GetValue<bool>())
             {
                 Game.Say("/ff");
             }
