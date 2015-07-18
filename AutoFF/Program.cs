@@ -24,6 +24,7 @@ namespace AutoFF
 
             Config.AddItem(new MenuItem("toggle", "Auto Surrender at Time Set").SetValue(true));
             Config.AddItem(new MenuItem("time", "Set Time for Surrender").SetValue(new Slider(20, 15, 120)));
+            Config.AddToMainMenu();
 
             Notifications.AddNotification("Auto FF Initialized", 10000, true);
 

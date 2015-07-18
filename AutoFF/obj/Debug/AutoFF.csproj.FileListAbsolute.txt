@@ -1,1 +1,2 @@
 C:\LeagueSharp\LocalAssemblies\AutoFF810A2\bin\Release\AutoFF.exe.config
+C:\Users\Desmond\Documents\LeagueSharp-Development\AutoFF\bin\Release\AutoFF.exe.config

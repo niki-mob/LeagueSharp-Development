@@ -13,6 +13,7 @@
     <PreBuildEvent />
     <PostBuildEvent />
     <OutputPath>bin\Release</OutputPath>
+    <ProjectGuid>{B9FA58FD-703D-45E8-9162-055C4850757D}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
