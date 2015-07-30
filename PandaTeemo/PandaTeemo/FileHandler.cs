@@ -25,17 +25,17 @@ namespace PandaTeemo
         /// <summary>
         /// File Location for X
         /// </summary>
-        static string xFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "xFile" + ".txt";
+        static string xFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "xFile" + ".txt";
 
         /// <summary>
         /// File Location for Y
         /// </summary>
-        static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
+        static string yFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "yFile" + ".txt";
 
         /// <summary>
         /// File Location for Z
         /// </summary>
-        static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
+        static string zFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "zFile" + ".txt";
 
         /// <summary>
         /// Array of X String
@@ -91,10 +91,11 @@ namespace PandaTeemo
             if (!Directory.Exists(ShroomLocation))
             {
                 Directory.CreateDirectory(ShroomLocation);
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.CrystalScar);
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.HowlingAbyss);
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.SummonersRift);
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.TwistedTreeline);
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.CrystalScar.ToString());
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.HowlingAbyss.ToString());
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.SummonersRift.ToString());
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.TwistedTreeline.ToString());
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.Unknown.ToString());
                 CreateFile();
             }
 

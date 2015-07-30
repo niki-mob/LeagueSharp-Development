@@ -51,10 +51,6 @@ namespace AutoFF
                 Game.Say("/ff");
                 surrender = true;
             }
-            else
-            {
-                return;
-            }
         }
     }
 }

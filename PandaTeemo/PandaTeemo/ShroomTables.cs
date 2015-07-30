@@ -26,6 +26,11 @@ namespace PandaTeemo
         public List<Vector3> HowlingAbyss = new List<Vector3>();
 
         /// <summary>
+        /// List of Locations in Butcher's Bridge
+        /// </summary>
+        public List<Vector3> ButcherBridge = new List<Vector3>();
+
+        /// <summary>
         /// List of Location in Crystal Scar
         /// </summary>
         public List<Vector3> CrystalScar = new List<Vector3>();
@@ -41,6 +46,7 @@ namespace PandaTeemo
         public ShroomTables()
         {
             CreateTables();
+
             var list = (from pos in SummonersRift
                         let x = pos.X
                         let y = pos.Y
@@ -69,6 +75,12 @@ namespace PandaTeemo
                         select new Vector3(x, z, y)).ToList();
             TwistedTreeline = list;
 
+            list = (from pos in ButcherBridge
+                    let x = pos.X
+                    let y = pos.Y
+                    let z = pos.Z
+                    select new Vector3(x, z, y)).ToList();
+            ButcherBridge = list;
         }
 
         /// <summary>
@@ -179,7 +191,7 @@ namespace PandaTeemo
                 HowlingAbyss.Add(new Vector3(4107f, -178.3095f, 5175f));
                 HowlingAbyss.Add(new Vector3(5927f, -178.3095f, 5197f));
                 HowlingAbyss.Add(new Vector3(5633f, -178.3095f, 6390f));
-
+                
                 // Red Side
                 HowlingAbyss.Add(new Vector3(8921f, -178.3095f, 7873f));
                 HowlingAbyss.Add(new Vector3(7555f, -178.3095f, 6755f));
@@ -233,11 +245,47 @@ namespace PandaTeemo
 
             #endregion
 
-            #region Unknown Map
+            #region Unknown Map / Butcher's Bridge
+
+            else if (Utility.Map.GetMap().Type.ToString() == "Unknown")
+            {
+                /// Custom List
+                if (FileHandler.Position.Count() > 0 &&
+                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                {
+                    foreach (var pos in FileHandler.Position)
+                    {
+                        ButcherBridge.Add(pos);
+                    }
+                }
+
+                // Blue Side
+                ButcherBridge.Add(new Vector3(5518f, -169.1383f, 6259f));
+                ButcherBridge.Add(new Vector3(4036f, -169.1383f, 5067f));
+
+                // Blue Side Relics
+                ButcherBridge.Add(new Vector3(5928.342f, -169.1383f, 5193.888f));
+                ButcherBridge.Add(new Vector3(4806f, -169.1383f, 3925.413f));
+
+                // Red Side
+                ButcherBridge.Add(new Vector3(6484f, -169.1383f, 7023.106f));
+                ButcherBridge.Add(new Vector3(7743.811f, -169.1383f, 8605.378f));
+
+                // Red Side Relics
+                ButcherBridge.Add(new Vector3(8904f, -169.1383f, 7873f));
+                ButcherBridge.Add(new Vector3(7558f, -169.1383f, 6790f));
+
+                Notifications.AddNotification("Shrooms Loaded", 10000, true);
+            }
+
+            #endregion
+
+            #region Failed
 
             else
             {
-                Notifications.AddNotification("Shrooms Loaded", 10000, true);
+                Notifications.AddNotification("Failed to Initilize Shrooms", 10000, true);
+                return;
             }
 
             #endregion
