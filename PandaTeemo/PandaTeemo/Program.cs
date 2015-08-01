@@ -77,7 +77,6 @@ namespace PandaTeemo
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            _FileHandler = new FileHandler();
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -173,6 +172,7 @@ namespace PandaTeemo
             debug.AddItem(new MenuItem("debugdraw", "Draw Coords").SetValue(false));
             debug.AddItem(new MenuItem("x", "Where to draw X").SetValue(new Slider(500, 0, 1920)));
             debug.AddItem(new MenuItem("y", "Where to draw Y").SetValue(new Slider(500, 0, 1080)));
+            debug.AddItem(new MenuItem("debugpos", "Draw Custom Shroom Locations Coordinates").SetValue(true));
 
             // Flee Menu
             flee.AddItem(new MenuItem("fleetoggle", "Flee").SetValue(new KeyBind(65, KeyBindType.Press)));
@@ -186,6 +186,7 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("autoR", "Auto Place Shrooms in Important Places").SetValue(true));
             misc.AddItem(new MenuItem("autoRPanic", "Panic Key for Auto R").SetValue(new KeyBind(84, KeyBindType.Press)));
             misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
+            misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have").SetValue(new Slider(1, 1, 25)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
             Config.AddToMainMenu();
@@ -200,11 +201,13 @@ namespace PandaTeemo
             Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
             Drawing.OnDraw += Drawing_OnDraw;
 
-            // Notification (Replacement for PrintChat)
+            // GG PrintChat Bik™
+            Game.PrintChat("<font color='#FBF5EF'>Game.PrintChat Bik</font> - <font color = '#01DF3A'>PandaTeemo v1.7.0.1 Loaded</font>");
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.7", 10000, true);
+            Notifications.AddNotification("Version 1.7.0.1", 10000, true);
 
             // Loads ShroomPosition
+            _FileHandler = new FileHandler();
             ShroomPositions = new ShroomTables();
         }
 

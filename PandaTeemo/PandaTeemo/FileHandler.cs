@@ -40,17 +40,17 @@ namespace PandaTeemo
         /// <summary>
         /// Array of X String
         /// </summary>
-        static string[] xString = new string[xFile.Count()];
+        static string[] xString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
 
         /// <summary>
         /// Array of Z String
         /// </summary>
-        static string[] zString = new string[zFile.Count()];
+        static string[] zString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
 
         /// <summary>
         /// Array of Y String
         /// </summary>
-        static string[] yString = new string[yFile.Count()];
+        static string[] yString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
 
         /// <summary>
         /// Array of X Int
@@ -146,9 +146,13 @@ namespace PandaTeemo
         {
             #region Get Location
 
-            for (var i = 0; i < xInt.Count(); i++)
+            for (var i = 0; i < xInt.Count() && i < yInt.Count() && i < zInt.Count(); i++)
             {
                 Position.Add(new Vector3(xInt[i], zInt[i], yInt[i]));
+                if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
+                {
+                    Game.PrintChat(Position[i].ToString());
+                }
             }
 
             #endregion
