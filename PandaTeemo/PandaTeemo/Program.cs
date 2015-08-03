@@ -77,6 +77,7 @@ namespace PandaTeemo
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            Hacks.PingHack = true;
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -117,11 +118,12 @@ namespace PandaTeemo
             var harass = Config.AddSubMenu(new Menu("Harass", "Harass"));
             var laneclear = Config.AddSubMenu(new Menu("LaneClear", "LaneClear"));
             var jungleclear = Config.AddSubMenu(new Menu("JungleClear", "JungleClear"));
-            var ks = Config.AddSubMenu(new Menu("KSMenu", "KSMenu"));
+            var ks = Config.AddSubMenu(new Menu("KillSteal", "KSMenu"));
             var flee = Config.AddSubMenu(new Menu("Flee Menu", "Flee"));
             var drawing = Config.AddSubMenu(new Menu("Drawing", "Drawing"));
             var interrupt = Config.AddSubMenu(new Menu("Interrupt", "Interrupt & Gapcloser"));
             var misc = Config.AddSubMenu(new Menu("Misc", "Misc"));
+            var hacks = Config.AddSubMenu(new Menu("Hack Menu", "Hacks"));
 
             // Main Menu
             Orbwalker = new Orbwalking.Orbwalker(orbwalking);
@@ -188,6 +190,8 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
             misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have").SetValue(new Slider(1, 1, 25)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
+
+            hacks.AddItem(new MenuItem("zoomHack", "Zoom Hack Enabler").SetValue(false));
 
             Config.AddToMainMenu();
 
@@ -1064,6 +1068,8 @@ namespace PandaTeemo
         /// <param name="args"></param>
         static void Game_OnUpdate(EventArgs args)
         {
+            Hacks.ZoomHack = Config.SubMenu("Hacks").Item("zoomHack").GetValue<bool>();
+
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
 
@@ -1114,6 +1120,7 @@ namespace PandaTeemo
                     break;
             }
         }
+
         #endregion
 
         #region Drawing
