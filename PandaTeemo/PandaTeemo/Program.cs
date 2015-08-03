@@ -191,7 +191,7 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have").SetValue(new Slider(1, 1, 25)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
-            hacks.AddItem(new MenuItem("zoomHack", "Zoom Hack Enabler").SetValue(false));
+            hacks.AddItem(new MenuItem("zoomHack", "Zoom Hack Enabler (DISABLED)").SetValue(false));
 
             Config.AddToMainMenu();
 
@@ -1068,7 +1068,7 @@ namespace PandaTeemo
         /// <param name="args"></param>
         static void Game_OnUpdate(EventArgs args)
         {
-            Hacks.ZoomHack = Config.SubMenu("Hacks").Item("zoomHack").GetValue<bool>();
+            //Hacks.ZoomHack = Config.SubMenu("Hacks").Item("zoomHack").GetValue<bool>();
 
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
