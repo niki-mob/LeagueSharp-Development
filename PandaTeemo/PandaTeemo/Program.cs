@@ -97,9 +97,9 @@ namespace PandaTeemo
 
             // Spells
             Q = new Spell(SpellSlot.Q, 680);
-            W = new Spell(SpellSlot.W);
+            W = new Spell(SpellSlot.W, 20);
             E = new Spell(SpellSlot.E);
-            R = new Spell(SpellSlot.R, 230);
+            R = new Spell(SpellSlot.R, 300);
 
             Q.SetTargetted(0f, 2000f);
             R.SetSkillshot(0.1f, 75f, float.MaxValue, false, SkillshotType.SkillshotCircle);
@@ -136,6 +136,7 @@ namespace PandaTeemo
             combo.AddItem(new MenuItem("useqADC", "Use Q only on ADC during Combo").SetValue(false));
             combo.AddItem(new MenuItem("wCombat", "Use W if enemy is in range only").SetValue(false));
             combo.AddItem(new MenuItem("rCharge", "Charges of R before using R").SetValue(new Slider(2, 1, 3)));
+            combo.AddItem(new MenuItem("checkCamo", "Prevents combo being activated while stealth in brush").SetValue(false));
 
             // Harass Menu
             harass.AddItem(new MenuItem("qharass", "Harass with Q").SetValue(true));
@@ -146,7 +147,7 @@ namespace PandaTeemo
             laneclear.AddItem(new MenuItem("attackTurret", "Attack Turret").SetValue(true));
             laneclear.AddItem(new MenuItem("attackWard", "Attack Ward").SetValue(true));
             laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(true));
-            laneclear.AddItem(new MenuItem("userKill", "Use R only if Killable").SetValue(false));
+            laneclear.AddItem(new MenuItem("userKill", "Use R only if Killable").SetValue(true));
             laneclear.AddItem(new MenuItem("minionR", "Minion for R").SetValue(new Slider(3, 1, 4)));
 
             // JungleClear Menu
@@ -208,7 +209,7 @@ namespace PandaTeemo
             // GG PrintChat Bik™
             Game.PrintChat("<font color='#FBF5EF'>Game.PrintChat Bik</font> - <font color = '#01DF3A'>PandaTeemo v1.7.0.1 Loaded</font>");
             Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.7.0.1", 10000, true);
+            Notifications.AddNotification("Version 1.7.0.2", 10000, true);
 
             // Loads ShroomPosition
             _FileHandler = new FileHandler();
@@ -480,10 +481,15 @@ namespace PandaTeemo
         /// </summary>
         static void Combo()
         {
-            var target = TargetSelector.GetTarget(500, TargetSelector.DamageType.Physical);
-            var qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var checkCamo = Config.SubMenu("Combo").Item("checkCamo").GetValue<bool>();
+
+            if (checkCamo && Player.HasBuff("CamouflageStealth"))
+            {
+                return;
+            }
+
+            var enemies = HeroManager.Enemies.Where(t => t.IsValidTarget() && Orbwalker.InAutoAttackRange(t)).FirstOrDefault();
             var rtarget = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
-            var useQ = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useW = Config.SubMenu("Combo").Item("wcombo").GetValue<bool>();
             var useR = Config.SubMenu("Combo").Item("rcombo").GetValue<bool>();
             var wCombat = Config.SubMenu("Combo").Item("wCombat").GetValue<bool>();
@@ -495,28 +501,43 @@ namespace PandaTeemo
                 W.Cast();
             }
 
+            if (enemies == null)
+            {
+                return;
+            }
+
             if (useW && wCombat)
             {
-                if (target.IsValidTarget() && W.IsReady())
+                if (W.IsReady())
                 {
                     W.Cast();
                 }
             }
 
-            if (!target.IsValidTarget())
-            {
-                return;
-            }
-
-            /*if (Q.IsReady() && useQ && qtarget.IsValidTarget())
-            {
-                Q.Cast(qtarget, Packets);
-            }*/
-
             if (R.IsReady() && useR && R.IsInRange(rtarget) && rCharge <= rCount && rtarget.IsValidTarget() && !IsShroomed(rtarget.Position))
             {
                 R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
             }
+
+            else if (R.IsReady() && useR && rCharge <= rCount && IsShroomed(rtarget.Position))
+            {
+                var shroom = ObjectManager.Get<Obj_AI_Base>().Where(t => t.Name == "Noxious Trap").FirstOrDefault().Position;
+
+                if (R.IsInRange(rtarget, Player.CharData.SelectionRadius * R.Level + 2) && IsShroomed(shroom))
+                {
+                    R.Cast(shroom);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            
+            else
+            {
+                return;
+            }
+
         }
 
         #endregion
@@ -571,93 +592,6 @@ namespace PandaTeemo
                     R.CastIfHitchanceEquals(target, HitChance.VeryHigh, Packets);
                 }
             }
-
-            #endregion
-
-            #region Old Logic
-
-            /*
-            var aatarget = TargetSelector.GetTarget(500, TargetSelector.DamageType.Physical);
-            var qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var rtarget = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
-            var KSQ = Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>();
-            var KSR = Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>();
-            var KSAA = Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>();
-
-            // To-Do: Rework Logic
-            if (KSQ || KSAA)
-            {
-                if (!aatarget.IsValid && !qtarget.IsValid)
-                {
-                    return;
-                }
-                else
-                {
-                    double TeemoE = 0;
-                    TeemoE += Player.GetSpellDamage(aatarget, SpellSlot.E);
-
-                    if (aatarget.Health <= Player.GetAutoAttackDamage(aatarget) + TeemoE)
-                    {
-                        if (Q.IsReady() &&
-                            Q.Delay < Player.AttackCastDelay &&
-                            KSQ && qtarget.IsValidTarget() && qtarget.Health <= Q.GetDamage(qtarget) &&
-                            Q.IsInRange(qtarget))
-                        {
-                            Q.CastOnUnit(qtarget, Packets);
-                        }
-                        else
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, aatarget);
-                        }
-                    }
-                    else if (qtarget.Health <= Q.GetDamage(qtarget))
-                    {
-                        if (Q.IsReady() &&
-                            Q.Delay < Player.AttackCastDelay &&
-                            KSQ && qtarget.IsValidTarget() && qtarget.Health <= Q.GetDamage(qtarget) &&
-                            Q.IsInRange(qtarget))
-                        {
-                            Q.CastOnUnit(qtarget, Packets);
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-            }
-
-            if (KSR)
-            {
-                if (R.IsReady() && rtarget.IsValidTarget())
-                {
-                    if (rtarget.Health <= R.GetDamage(rtarget) &&
-                        !Q.IsReady() && R.IsInRange(rtarget) &&
-                        KSQ)
-                    {
-                        R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
-                    }
-                    else if (rtarget.Health <= R.GetDamage(rtarget) &&
-                        R.IsInRange(rtarget) &&
-                        !KSQ)
-                    {
-                        R.CastIfHitchanceEquals(rtarget, HitChance.VeryHigh, Packets);
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    return;
-                }
-            }
-            */
 
             #endregion
         }
@@ -1069,6 +1003,7 @@ namespace PandaTeemo
         static void Game_OnUpdate(EventArgs args)
         {
             //Hacks.ZoomHack = Config.SubMenu("Hacks").Item("zoomHack").GetValue<bool>();
+            R.Range = 300 * R.Level;
 
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
