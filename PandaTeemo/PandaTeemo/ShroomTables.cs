@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LeagueSharp;
 using LeagueSharp.Common;
 
 namespace PandaTeemo
 {
-    //The following code is taken from UC2's Teemo. All the shroom locations are modified in the recent updates.
-    //To add a shroom location, go to LeagueSharp's AppData folder LSXXXXXXXX/PandaTeemo/Map Name/(xFile.txt, yFile.txt, zFile.txt) and modify the values to suite your needs.
-    //REWORKED BY KARMAPANDA
+    // Original Code Credit: UC2
+    // To add a shroom location, go to LeagueSharp's AppData folder LSXXXXXXXX/PandaTeemo/Map Name/(xFile.txt, yFile.txt, zFile.txt) and modify the values to suite your needs.
+    // This code has been modified by KarmaPanda
 
     /// <summary>
     /// Shroom Locations
@@ -285,6 +286,7 @@ namespace PandaTeemo
             else
             {
                 Notifications.AddNotification("Failed to Initilize Shrooms", 10000, true);
+                Game.PrintChat("Please Lower/Increase the amount of Custom Shroom Locations for this assembly to work.");
                 return;
             }
 

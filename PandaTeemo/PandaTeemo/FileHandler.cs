@@ -9,7 +9,7 @@ using SharpDX;
 namespace PandaTeemo
 {
     /// <summary>
-    /// FileHandler is fixed for Sandbox
+    /// Original Code Credit: AiM
     /// </summary>
     internal class FileHandler
     {
@@ -186,6 +186,11 @@ namespace PandaTeemo
 
             GetShroomLocation();
             Notifications.AddNotification("FileHandler Initialized", 10000, true);
+
+            if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
+            {
+                Game.PrintChat("Sucessfully Initialized FileHandler");
+            }
 
             #endregion
         }
