@@ -205,7 +205,7 @@ namespace PandaTeemo
             misc.AddItem(new MenuItem("autoR", "Auto Place Shrooms in Important Places").SetValue(true));
             misc.AddItem(new MenuItem("autoRPanic", "Panic Key for Auto R").SetValue(new KeyBind(84, KeyBindType.Press)));
             misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
-            misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have").SetValue(new Slider(1, 1, 25)));
+            misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have (Requires Reload)").SetValue(new Slider(1, 1, 25)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
 
             hacks.AddItem(new MenuItem("zoomHack", "Zoom Hack Enabler (DISABLED)").SetValue(false));
@@ -247,9 +247,9 @@ namespace PandaTeemo
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 args.Process = false;
-                foreach (var minion in MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Player.AttackRange, MinionTypes.All))
+                foreach (var minion in MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange, MinionTypes.All))
                 {
-                    if (minion.Health < ObjectManager.Player.GetAutoAttackDamage(minion) + Program.TeemoE(minion) && Orbwalking.InAutoAttackRange(minion))
+                    if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion))
                     {
                         Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                         args.Process = true;
@@ -270,11 +270,26 @@ namespace PandaTeemo
             else if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
                 args.Process = false;
-                var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange, MinionTypes.All).Where(t => t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var enemy = HeroManager.Enemies.OrderBy(t => t.Health).FirstOrDefault();
+                var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange, MinionTypes.All).Where(t => t.IsEnemy && Orbwalker.InAutoAttackRange(t)).OrderBy(t => t.Health).FirstOrDefault();
 
-                if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + Program.TeemoE(minion))
+                if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                    args.Process = true;
+                    return;
+                }
+
+                else if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                {
+                    Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                    args.Process = true;
+                    return;
+                }
+
+                else if (minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                {
+                    Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
                     args.Process = true;
                     return;
                 }
@@ -347,6 +362,7 @@ namespace PandaTeemo
                     else
                     {
                         args.Process = true;
+                        return;
                     }
 
                     #endregion
@@ -380,7 +396,7 @@ namespace PandaTeemo
             if (gapcloser.Sender.IsValidTarget(R.Range) && gapcloser.Sender.IsFacing(Player))
             {
                 Notifications.AddNotification("Gapclosing" + gapcloser.Sender.Name, 10000, true);
-                R.Cast(gapcloser.Sender.ServerPosition, Packets);
+                R.Cast(gapcloser.Sender.Position, Packets);
             }
         }
 
@@ -608,19 +624,6 @@ namespace PandaTeemo
 
         #endregion
 
-        #region Harass
-
-        static void Harass()
-        {
-            var enemy = HeroManager.Enemies.Where(t => t.IsValidTarget() && Orbwalker.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-            if (Orbwalker.InAutoAttackRange(enemy))
-            {
-                Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
-            }
-        }
-
-        #endregion
-
         #region LaneClear
 
         /// <summary>
@@ -680,10 +683,10 @@ namespace PandaTeemo
             {
                 var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
                 var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
-                var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var nexus = ObjectManager.Get<Obj_HQ>().Where(t => t.IsValidTarget() && Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.NotAlly, MinionOrderTypes.Health).FirstOrDefault();
+                var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var nexus = ObjectManager.Get<Obj_HQ>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault();
                 var mob = ObjectManager.Get<Obj_AI_Base>().Where(t => t.IsMinion && t.IsEnemy).OrderBy(t => t.Health);
                 
                 foreach (var m in mob)
@@ -768,7 +771,7 @@ namespace PandaTeemo
 
                     else
                     {
-                        JungleClear();
+                        return;
                     }
                 }
             }
@@ -790,27 +793,32 @@ namespace PandaTeemo
             var ammoR = ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R).Ammo;
             var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
 
-            if (useQ && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
-                var junglemobQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-                foreach(var jungleMob in junglemobQ)
+                var jungleMobQ = ObjectManager.Get<Obj_AI_Base>().Where(t => Q.IsInRange(t) && t.Team == GameObjectTeam.Neutral).OrderBy(t => t.MaxHealth).FirstOrDefault();
+                var jungleMobR = ObjectManager.Get<Obj_AI_Base>().Where(t => R.IsInRange(t) && t.Team == GameObjectTeam.Neutral).OrderBy(t => t.MaxHealth).FirstOrDefault();
+
+                if (useQ)
                 {
-                    if (Q.IsReady() && Q.IsInRange(jungleMob) && qManaManager <= (int)Player.ManaPercent)
+                    if (Q.IsReady() && qManaManager <= (int)Player.ManaPercent)
                     {
-                        Q.CastOnUnit(jungleMob, Packets);
+                        Q.CastOnUnit(jungleMobQ, Packets);
+                    }
+                    else
+                    {
+                        return;
                     }
                 }
-            }
 
-
-            if (useR && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
-            {
-                var junglemobR = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-                foreach (var jungleMob in junglemobR)
+                if (useR)
                 {
-                    if (R.IsReady() && R.IsInRange(jungleMob) && ammoR >= 2)
+                    if (R.IsReady() && ammoR >= 2)
                     {
-                        R.Cast(jungleMob, Packets);
+                        R.Cast(jungleMobR.Position, Packets);
+                    }
+                    else
+                    {
+                        return;
                     }
                 }
             }
@@ -889,39 +897,50 @@ namespace PandaTeemo
 
             var target = HeroManager.Enemies.Where(t => R.IsInRange(t) && t.IsValidTarget()).FirstOrDefault();
 
-            if (target.HasBuff("zhonyasringshield") && R.IsReady() && R.IsInRange(target))
+            if (target != null)
             {
-                R.Cast(target.Position, Packets);
+                if (target.HasBuff("zhonyasringshield") && R.IsReady() && R.IsInRange(target))
+                    R.Cast(target.Position, Packets);
             }
 
-            else
+            else if (target == null)
             {
                 if (Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
                 {
                     foreach (var place in ShroomPositions.SummonersRift.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
+                    {
                         R.Cast(place, Packets);
+                    }         
                 }
                 else if (Utility.Map.GetMap().Type == Utility.Map.MapType.HowlingAbyss)
                 {
                     foreach (var place in ShroomPositions.HowlingAbyss.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
+                    {
                         R.Cast(place, Packets);
+                    }
                 }
                 else if (Utility.Map.GetMap().Type == Utility.Map.MapType.CrystalScar)
                 {
                     // WIP
                     foreach (var place in ShroomPositions.CrystalScar.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
+                    {
                         R.Cast(place, Packets);
+                    }
                 }
                 else if (Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline)
                 {
                     // WIP
                     foreach (var place in ShroomPositions.TwistedTreeline.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
+                    {
                         R.Cast(place, Packets);
+                    }        
                 }
                 else if (Utility.Map.GetMap().Type.ToString() == "Unknown")
                 {
                     foreach (var place in ShroomPositions.ButcherBridge.Where(pos => pos.Distance(ObjectManager.Player.Position) <= R.Range && !IsShroomed(pos)))
+                    {
                         R.Cast(place, Packets);
+                    }
                 }
                 else
                 {
@@ -970,7 +989,7 @@ namespace PandaTeemo
         static void AutoQ()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.All);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range, MinionTypes.All);
 
             if (!Q.IsReady())
             {
@@ -1027,7 +1046,7 @@ namespace PandaTeemo
         static void AutoQW()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.All);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range, MinionTypes.All);
 
             if (!W.IsReady() || !Q.IsReady())
             {
@@ -1094,10 +1113,8 @@ namespace PandaTeemo
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
-                    LaneClear();
-                    break;
-                case Orbwalking.OrbwalkingMode.Mixed:
-                    Harass();
+                    //LaneClear();
+                    JungleClear();
                     break;
                 case Orbwalking.OrbwalkingMode.None:
                     //Flee Menu
@@ -1135,7 +1152,7 @@ namespace PandaTeemo
                     Config.SubMenu("Drawing").SubMenu("debug").Item("x").GetValue<Slider>().Value,
                     Config.SubMenu("Drawing").SubMenu("debug").Item("y").GetValue<Slider>().Value,
                     System.Drawing.Color.Red,
-                    Player.ServerPosition.ToString());
+                    Player.Position.ToString());
             }
 
             #endregion
