@@ -308,6 +308,7 @@ namespace PandaTeemo
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
                 args.Process = false;
+
                 foreach (var minion in MinionManager.GetMinions(Player.AttackRange, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health))
                 {
                     #region Variables
@@ -366,6 +367,106 @@ namespace PandaTeemo
                     }
 
                     #endregion
+                }
+
+                var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
+                var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
+                var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var nexus = ObjectManager.Get<Obj_HQ>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
+                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault();
+                var mob = ObjectManager.Get<Obj_AI_Base>().Where(t => t.IsMinion && t.IsEnemy).OrderBy(t => t.Health);
+
+                foreach (var m in mob)
+                {
+                    if (!Orbwalker.InAutoAttackRange(m))
+                    {
+                        #region Turret
+
+                        if (attackTurret)
+                        {
+                            if (turret != null)
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
+                                Utility.DelayAction.Add(1500, () => Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos));
+                            }
+                            if (inhib != null)
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, inhib);
+                                Utility.DelayAction.Add(1500, () => Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos));
+                            }
+                            if (nexus != null)
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
+                                Utility.DelayAction.Add(1500, () => Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos));
+                            }
+                        }
+
+                        #endregion
+
+                        #region Ward
+
+                        if (attackWard)
+                        {
+                            if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy)
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
+                                Utility.DelayAction.Add(1500, () => Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos));
+                            }
+                        }
+
+                        #endregion
+                    }
+
+                    else if (Orbwalker.InAutoAttackRange(m))
+                    {
+                        if (Orbwalker.InAutoAttackRange(turret) && attackTurret
+                            || Orbwalker.InAutoAttackRange(inhib) && attackTurret
+                            || Orbwalker.InAutoAttackRange(nexus) && attackTurret
+                            || Orbwalker.InAutoAttackRange(ward) && attackWard
+                            || !Orbwalker.InAutoAttackRange(m) && attackTurret
+                            || !Orbwalker.InAutoAttackRange(m) && attackWard)
+                        {
+                            #region Turret
+
+                            if (attackTurret)
+                            {
+                                if (turret != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
+                                }
+                                if (inhib != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, inhib);
+                                }
+                                if (nexus != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
+                                }
+                            }
+
+                            #endregion
+
+                            #region Ward
+
+                            if (attackWard)
+                            {
+                                if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
+                                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+                                }
+                            }
+
+                            #endregion
+                        }
+                    }
+
+                    else
+                    {
+                        args.Process = true;
+                        return;
+                    }
                 }
             }
 
@@ -660,18 +761,30 @@ namespace PandaTeemo
             var userKill = Config.SubMenu("LaneClear").Item("userKill").GetValue<bool>();
             var minionR = Config.SubMenu("LaneClear").Item("minionR").GetValue<Slider>().Value;
 
-            if (minionR <= rLocation.MinionsHit && useR || minionR <= r2Location.MinionsHit && useR || minionR <= rLocation.MinionsHit + r2Location.MinionsHit && useR)
+            if (rLocation.Position != null && minionR <= rLocation.MinionsHit && useR
+                || r2Location.Position != null && minionR <= r2Location.MinionsHit && useR
+                || rLocation.Position != null && r2Location.Position != null && minionR <= rLocation.MinionsHit + r2Location.MinionsHit && useR)
             {
                 if (useR && userKill)
                 {
                     foreach (var minion in allMinionsR)
                     {
-                        if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()) && minionR <= rLocation.MinionsHit)
+                        if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) 
+                            && R.IsReady() 
+                            && R.IsInRange(rLocation.Position.To3D()) 
+                            && !IsShroomed(rLocation.Position.To3D()) 
+                            && minionR <= rLocation.MinionsHit
+                            && rLocation.Position != null)
                         {
                             R.Cast(rLocation.Position, Packets);
                             return;
                         }
-                        else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) && R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()) && minionR <= r2Location.MinionsHit)
+                        else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) 
+                            && R.IsReady() 
+                            && R.IsInRange(r2Location.Position.To3D()) 
+                            && !IsShroomed(r2Location.Position.To3D()) 
+                            && minionR <= r2Location.MinionsHit
+                            && r2Location.Position != null)
                         {
                             R.Cast(r2Location.Position, Packets);
                             return;
@@ -681,118 +794,29 @@ namespace PandaTeemo
 
                 else if (useR)
                 {
-                    if (R.IsReady() && R.IsInRange(rLocation.Position.To3D()) && !IsShroomed(rLocation.Position.To3D()) && minionR <= rLocation.MinionsHit)
+                    if (rLocation.Position != null 
+                        && R.IsReady() 
+                        && R.IsInRange(rLocation.Position.To3D()) 
+                        && !IsShroomed(rLocation.Position.To3D()) 
+                        && minionR <= rLocation.MinionsHit)
                     {
                         R.Cast(rLocation.Position, Packets);
                         return;
                     }
-                    else if (R.IsReady() && R.IsInRange(r2Location.Position.To3D()) && !IsShroomed(r2Location.Position.To3D()) && minionR <= r2Location.MinionsHit)
+                    else if (r2Location.Position != null
+                        && R.IsReady() 
+                        && R.IsInRange(r2Location.Position.To3D()) 
+                        && !IsShroomed(r2Location.Position.To3D()) 
+                        && minionR <= r2Location.MinionsHit)
                     {
                         R.Cast(r2Location.Position, Packets);
                         return;
                     }
                 }
             }
-
-            #endregion
-
-            #region Turret / Ward
-
             else
             {
-                var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
-                var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
-                var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var nexus = ObjectManager.Get<Obj_HQ>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault();
-                var mob = ObjectManager.Get<Obj_AI_Base>().Where(t => t.IsMinion && t.IsEnemy).OrderBy(t => t.Health);
-                
-                foreach (var m in mob)
-                {
-                    if (!Orbwalker.InAutoAttackRange(m))
-                    {
-                        #region Turret
-
-                        if (attackTurret)
-                        {
-                            if (turret != null)
-                            {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
-                            }
-                            if (inhib != null)
-                            {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, inhib);
-                            }
-                            if (nexus != null)
-                            {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
-                            }
-                        }
-
-                        #endregion
-
-                        #region Ward
-
-                        if (attackWard)
-                        {
-                            if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy)
-                            {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
-                            }
-                        }
-
-                        #endregion
-                    }
-
-                    else if (Orbwalker.InAutoAttackRange(m))
-                    {
-                        if (Orbwalker.InAutoAttackRange(turret) && attackTurret
-                            || Orbwalker.InAutoAttackRange(inhib) && attackTurret
-                            || Orbwalker.InAutoAttackRange(nexus) && attackTurret
-                            || Orbwalker.InAutoAttackRange(ward) && attackWard
-                            || !Orbwalker.InAutoAttackRange(m) && attackTurret
-                            || !Orbwalker.InAutoAttackRange(m) && attackWard)
-                        {
-                            #region Turret
-
-                            if (attackTurret)
-                            {
-                                if (turret != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
-                                {
-                                    Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
-                                }
-                                if (inhib != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
-                                {
-                                    Player.IssueOrder(GameObjectOrder.AttackUnit, inhib);
-                                }
-                                if (nexus != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
-                                {
-                                    Player.IssueOrder(GameObjectOrder.AttackUnit, nexus);
-                                }
-                            }
-
-                            #endregion
-
-                            #region Ward
-
-                            if (attackWard)
-                            {
-                                if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
-                                {
-                                    Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
-                                }
-                            }
-
-                            #endregion
-                        }
-                    }
-
-                    else
-                    {
-                        return;
-                    }
-                }
+                return;
             }
 
             #endregion
@@ -814,10 +838,10 @@ namespace PandaTeemo
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
-                var jungleMobQ = ObjectManager.Get<Obj_AI_Base>().Where(t => Q.IsInRange(t) && t.Team == GameObjectTeam.Neutral).OrderBy(t => t.MaxHealth).FirstOrDefault();
-                var jungleMobR = ObjectManager.Get<Obj_AI_Base>().Where(t => R.IsInRange(t) && t.Team == GameObjectTeam.Neutral).OrderBy(t => t.MaxHealth).FirstOrDefault();
+                var jungleMobQ = ObjectManager.Get<Obj_AI_Base>().Where(t => Q.IsInRange(t) && t.Team == GameObjectTeam.Neutral && t.IsValidTarget()).OrderBy(t => t.MaxHealth).FirstOrDefault();
+                var jungleMobR = ObjectManager.Get<Obj_AI_Base>().Where(t => R.IsInRange(t) && t.Team == GameObjectTeam.Neutral && t.IsValidTarget()).OrderBy(t => t.MaxHealth).FirstOrDefault();
 
-                if (useQ)
+                if (useQ && jungleMobQ != null)
                 {
                     if (Q.IsReady() && qManaManager <= (int)Player.ManaPercent)
                     {
@@ -829,9 +853,9 @@ namespace PandaTeemo
                     }
                 }
 
-                if (useR)
+                if (useR && jungleMobR != null)
                 {
-                    if (R.IsReady() && ammoR >= 2)
+                    if (R.IsReady() && ammoR >= 1)
                     {
                         R.Cast(jungleMobR.Position, Packets);
                     }
@@ -866,19 +890,40 @@ namespace PandaTeemo
             // High Danger Level
             if (intChance == "High" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.High)
             {
-                Q.Cast(sender, Packets);
+                if (sender != null)
+                {
+                    Q.Cast(sender, Packets);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             // Medium Danger Level
             else if (intChance == "Medium" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Medium)
             {
-                Q.Cast(sender, Packets);
+                if (sender != null)
+                {
+                    Q.Cast(sender, Packets);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             // Low Danger Level
             else if (intChance == "Low" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Low)
             {
-                Q.Cast(sender, Packets);
+                if (sender != null)
+                {
+                    Q.Cast(sender, Packets);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             else
@@ -1005,6 +1050,11 @@ namespace PandaTeemo
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range, MinionTypes.All);
 
+            if (target == null)
+            {
+                return;
+            }
+
             if (!Q.IsReady())
             {
                 return;
@@ -1070,6 +1120,11 @@ namespace PandaTeemo
             if (W.IsReady())
             {
                 W.Cast();
+            }
+
+            if (target == null)
+            {
+                return;
             }
 
             if (Q.IsReady() && 1 <= allMinionsQ.Count)
