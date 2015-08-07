@@ -393,9 +393,8 @@ namespace PandaTeemo
         {
             var gapR = Config.SubMenu("Interrupt").Item("gapR").GetValue<bool>();
 
-            if (gapcloser.Sender.IsValidTarget(R.Range) && gapcloser.Sender.IsFacing(Player))
+            if (gapcloser.Sender.IsValidTarget() && gapcloser.Sender.IsFacing(Player) && gapcloser.Sender.IsTargetable)
             {
-                Notifications.AddNotification("Gapclosing" + gapcloser.Sender.Name, 10000, true);
                 R.Cast(gapcloser.Sender.Position, Packets);
             }
         }
@@ -579,15 +578,22 @@ namespace PandaTeemo
             var KSR = Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>();
             var KSAA = Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>();
 
-            #region KillSteal with AA / Q if AA not fast enough.
+            #region KillSteal with AA
 
             if (KSAA)
             {
-                var aatarget = HeroManager.Enemies.Where(t => Orbwalker.InAutoAttackRange(t) && Player.GetAutoAttackDamage(t) + Player.GetSpellDamage(t, SpellSlot.E) > t.Health).OrderBy(t => t.Distance3D(Player)).FirstOrDefault();
+                var aatarget = HeroManager.Enemies.Where(t => 
+                    t.IsValidTarget() 
+                    && Orbwalker.InAutoAttackRange(t) 
+                    && Player.GetAutoAttackDamage(t) + TeemoE(t) >= t.Health).OrderBy(t => t.Health).FirstOrDefault();
 
                 if (aatarget != null)
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, aatarget);
+                }
+                else
+                {
+                    return;
                 }
             }
 
@@ -597,11 +603,17 @@ namespace PandaTeemo
 
             if (KSQ)
             {
-                var target = HeroManager.Enemies.Where(t => Q.IsInRange(t) && Q.GetDamage(t) > t.Health).OrderBy(t => t.Distance3D(Player)).FirstOrDefault();
+                var target = HeroManager.Enemies.Where(t => t.IsValidTarget()
+                    && Q.IsInRange(t) 
+                    && Q.GetDamage(t) >= t.Health).OrderBy(t => t.Health).FirstOrDefault();
 
                 if (target != null && Q.IsReady())
                 {
                     Q.Cast(target);
+                }
+                else
+                {
+                    return;
                 }
             }
 
@@ -611,7 +623,9 @@ namespace PandaTeemo
 
             if (KSR)
             {
-                var target = HeroManager.Enemies.Where(t => R.IsInRange(t) && R.GetDamage(t) > t.Health).OrderBy(t => t.Distance3D(Player)).FirstOrDefault();
+                var target = HeroManager.Enemies.Where(t => t.IsValidTarget() 
+                    && R.IsInRange(t) 
+                    && R.GetDamage(t) >= t.Health).OrderBy(t => t.Health).FirstOrDefault();
 
                 if (target != null && R.IsReady())
                 {
@@ -841,29 +855,24 @@ namespace PandaTeemo
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender,
             Interrupter2.InterruptableTargetEventArgs args)
         {
-            // Fixed Interrupt
-
             var intq = Config.SubMenu("Interrupt").Item("intq").GetValue<bool>();
             var intChance = Config.SubMenu("Interrupt").Item("intChance").GetValue<StringList>().SelectedValue;
 
             // High Danger Level
-            if (intChance.Contains("High") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.High)
+            if (intChance == "High" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.High)
             {
-                Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
             }
 
             // Medium Danger Level
-            else if (intChance.Contains("Medium") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Medium)
+            else if (intChance == "Medium" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Medium)
             {
-                Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
             }
 
             // Low Danger Level
-            else if (intChance.Contains("Low") && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Low)
+            else if (intChance == "Low" && intq && Q.IsReady() && args.DangerLevel == Interrupter2.DangerLevel.Low)
             {
-                Notifications.AddNotification("Interrupting" + sender, 10000, true);
                 Q.Cast(sender, Packets);
             }
 
@@ -1113,7 +1122,7 @@ namespace PandaTeemo
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
-                    //LaneClear();
+                    LaneClear();
                     JungleClear();
                     break;
                 case Orbwalking.OrbwalkingMode.None:
@@ -1130,7 +1139,9 @@ namespace PandaTeemo
                     }
 
                     //KillSteal
-                    if (Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>() || Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>() || Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>())
+                    if (Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>() 
+                        || Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>() 
+                        || Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>())
                     {
                         KS();
                     }
