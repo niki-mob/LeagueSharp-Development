@@ -12,6 +12,10 @@ Open LeagueSharp loader, click Install Assemblies and paste this GitHub repo int
 - Nasus the LumberJack (Nasus Assembly)
 - AutoFF (Auto Surrender Utility Assembly)
 
+# Assemblies Fixed
+
+- GodLikeSkillz (Yasuo Assembly)
+
 # Credits
 
 - KarmaPanda
