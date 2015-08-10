@@ -148,7 +148,6 @@
             combo.AddItem(new MenuItem("qcombo", "Use Q in Combo").SetValue(true));
             combo.AddItem(new MenuItem("wcombo", "Use W in Combo").SetValue(true));
             combo.AddItem(new MenuItem("rcombo", "Kite with R in Combo").SetValue(true));
-            //combo.AddItem(new MenuItem("checkAA", "Check for AA Range before using Q").SetValue(true));
             combo.AddItem(new MenuItem("useqADC", "Use Q only on ADC during Combo").SetValue(false));
             combo.AddItem(new MenuItem("wCombat", "Use W if enemy is in range only").SetValue(false));
             combo.AddItem(new MenuItem("rCharge", "Charges of R before using R").SetValue(new Slider(2, 1, 3)));
@@ -207,6 +206,8 @@
             misc.AddItem(new MenuItem("customLocation", "Use Custom Location for Auto Shroom (Requires Reload)").SetValue(true));
             misc.AddItem(new MenuItem("customLocationInt", "Set the amount of locations you have (Requires Reload)").SetValue(new Slider(1, 1, 25)));
             misc.AddItem(new MenuItem("packets", "Use Packets").SetValue(false));
+            misc.AddItem(new MenuItem("checkAA", "Subtract Range for Q (checkAA)").SetValue(true));
+            misc.AddItem(new MenuItem("checkaaRange", "How many to subtract from Q Range (checkAA)").SetValue(new Slider(100, 0, 180)));
 
             hacks.AddItem(new MenuItem("zoomHack", "Zoom Hack Enabler (DISABLED)").SetValue(false));
 
@@ -492,7 +493,7 @@
         #region AfterAttack
 
         /// <summary>
-        /// Action after Attack (Taken from Marksman)
+        /// Action after Attack
         /// </summary>
         /// <param name="unit">Unit Attacked</param>
         /// <param name="target">Target Attacked</param>
@@ -501,103 +502,87 @@
             var useQCombo = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useQHarass = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
             var targetAdc = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
-            //var checkAA = Config.SubMenu("Combo").Item("checkAA").GetValue<bool>();
+            var checkAA = Config.SubMenu("Misc").Item("checkAA").GetValue<bool>();
+            var checkaaRange = Config.SubMenu("Misc").Item("checkaaRange").GetValue<Slider>().Value;
             var t = target as Obj_AI_Hero;
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
-
-                #region Old Logic
-
-                //if (checkAA)
-                //{
-                //    if (useqADC)
-                //    {
-                //        foreach (var adc in Marksman)
-                //        {
-                //            if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180) && t.CharData.BaseSkinName == adc)
-                //            {
-                //                Q.Cast(t, Packets);
-                //            }
-                //            else
-                //            {
-                //                return;
-                //            }
-                //        }
-                //    }
-
-                //    else if (useQCombo && Q.IsReady() && Q.IsInRange(t, -180))
-                //    {
-                //        Q.Cast(t, Packets);
-                //    }
-
-                //    else
-                //    {
-                //        return;
-                //    }
-                //}
-                //else
-                //{
-                //    if (useqADC)
-                //    {
-                //        foreach (var adc in Marksman)
-                //        {
-                //            if (useQCombo && Q.IsReady() && Q.IsInRange(t) && t.CharData.BaseSkinName == adc)
-                //            {
-                //                Q.Cast(t, Packets);
-                //            }
-                //            else
-                //            {
-                //                return;
-                //            }
-                //        }
-                //    }
-                //}
-
-                #endregion
-
-                #region Attack ADC Only
-
-                if (targetAdc)
+                if (checkAA)
                 {
-                    foreach (var adc in Marksman)
+                    if (targetAdc)
                     {
-                        if (t.CharData.BaseSkinName == adc && useQCombo && Q.IsReady() && Q.IsInRange(t))
+                        foreach (var adc in Marksman)
+                        {
+                            if (t.CharData.BaseSkinName == adc && useQCombo && Q.IsReady() && Q.IsInRange(t, -checkaaRange))
+                            {
+                                Q.Cast(t, Packets);
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (useQCombo && Q.IsReady() && Q.IsInRange(t, -checkaaRange))
                         {
                             Q.Cast(t, Packets);
                         }
+
                         else
                         {
                             return;
                         }
                     }
                 }
-
-                #endregion
-
-                #region Attacking the Target
-
                 else
                 {
-                    if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                    if (targetAdc)
                     {
-                        Q.Cast(t, Packets);
+                        foreach (var adc in Marksman)
+                        {
+                            if (t.CharData.BaseSkinName == adc && useQCombo && Q.IsReady() && Q.IsInRange(t))
+                            {
+                                Q.Cast(t, Packets);
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
                     }
-
                     else
                     {
-                        return;
-                    }
-                }
+                        if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                        {
+                            Q.Cast(t, Packets);
+                        }
 
-                #endregion
+                        else
+                        {
+                            return;
+                        }
+                    }   
+                }
             }
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
-                if (useQHarass && Q.IsReady() && Q.IsInRange(t))
+                if (checkAA)
                 {
-                    Q.Cast(t, Packets);
+                    if (useQHarass && Q.IsReady() && Q.IsInRange(t, -100f))
+                    {
+                        Q.Cast(t, Packets);
+                    }
+                }
+                else
+                {
+                    if (useQHarass && Q.IsReady() && Q.IsInRange(t))
+                    {
+                        Q.Cast(t, Packets);
+                    }
                 }
             }
         }
@@ -665,11 +650,16 @@
 
             else if (R.IsReady() && useR && rCharge <= rCount && IsShroomed(rtarget.Position))
             {
-                var shroom = ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(t => t.Name == "Noxious Trap").Position;
+                var shroom = ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(t => t.Name == "Noxious Trap");
 
-                if (R.IsInRange(rtarget, Player.CharData.SelectionRadius * R.Level + 2) && IsShroomed(shroom))
+                if (shroom != null)
                 {
-                    R.Cast(shroom);
+                    var shroomPosition = shroom.Position;
+
+                    if (R.IsInRange(rtarget, Player.CharData.SelectionRadius * R.Level + 2) && IsShroomed(shroomPosition))
+                    {
+                        R.Cast(shroom);
+                    }
                 }
             }
         }
