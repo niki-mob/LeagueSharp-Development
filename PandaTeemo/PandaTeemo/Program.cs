@@ -268,17 +268,12 @@
                 var enemy = HeroManager.Enemies.OrderBy(t => t.Health).FirstOrDefault();
                 var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange).Where(t => t.IsEnemy && Orbwalker.InAutoAttackRange(t)).OrderBy(t => t.Health).FirstOrDefault();
 
-                if (minion == null)
-                {
-                    return;
-                }
-
-                if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
+                if (minion != null && minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                 }
 
-                if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                if (minion != null && minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                 }
