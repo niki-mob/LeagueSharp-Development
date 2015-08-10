@@ -1,13 +1,12 @@
-using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Color = System.Drawing.Color;
-
 namespace NasusTheLumberJack
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Drawing;
+
+    using LeagueSharp;
+    using LeagueSharp.Common;
+
     /// <summary>
     /// This program is created by KarmaPanda
     /// </summary>
@@ -18,48 +17,55 @@ namespace NasusTheLumberJack
         /// <summary>
         /// Champion Name
         /// </summary>
-        public const string _Name = "Nasus";
+        public const string ChampionName = "Nasus";
 
         /// <summary>
-        /// Q
+        /// The Spell Q
         /// </summary>
-        public static Spell Q;
+        private static Spell spellQ;
 
         /// <summary>
-        /// W
+        /// The Spell W
         /// </summary>
-        public static Spell W;
+        private static Spell spellW;
 
         /// <summary>
-        /// E
+        /// The Spell E
         /// </summary>
-        public static Spell E;
+        private static Spell spellE;
 
         /// <summary>
-        /// R
+        /// The Spell R
         /// </summary>
-        public static Spell R;
+        private static Spell spellR;
 
         /// <summary>
-        /// Orbwalker
+        /// The Orbwalker
         /// </summary>
-        public static Orbwalking.Orbwalker Orbwalker;
-        
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed. Suppression is OK here.")]
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1306:FieldNamesMustBeginWithLowerCaseLetter", Justification = "Reviewed. Suppression is OK here.")]
+        private static Orbwalking.Orbwalker Orbwalker;
+
         /// <summary>
-        /// Menu
+        /// The Menu
         /// </summary>
-        public static Menu Menu;
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1306:FieldNamesMustBeginWithLowerCaseLetter", Justification = "Reviewed. Suppression is OK here.")]
+        private static Menu Config;
 
         /// <summary>
         /// Player
         /// </summary>
-        static Obj_AI_Hero Player { get { return ObjectManager.Player; } }
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1623:PropertySummaryDocumentationMustMatchAccessors", Justification = "Reviewed. Suppression is OK here.")]
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1630:DocumentationTextMustContainWhitespace", Justification = "Reviewed. Suppression is OK here.")]
+        private static Obj_AI_Hero Player
+        {
+            get { return ObjectManager.Player; }
+        }
 
         /// <summary>
         /// Called when program starts
         /// </summary>
-        /// <param name="args"></param>
-        static void Main(string[] args)
+        private static void Main()
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
@@ -67,167 +73,151 @@ namespace NasusTheLumberJack
         /// <summary>
         /// Called when game is loaded
         /// </summary>
-        /// <param name="args"></param>
-        static void Game_OnGameLoad(EventArgs args)
+        /// <param name="args">
+        /// The Args
+        /// </param>
+        private static void Game_OnGameLoad(EventArgs args)
         {
-            if (Player.BaseSkinName != "Nasus")
+            if (Player.CharData.BaseSkinName != "Nasus")
             {
                 return;
             }
 
-            Q = new Spell(SpellSlot.Q, Player.AttackRange + 50);
-            W = new Spell(SpellSlot.W, 600);
-            E = new Spell(SpellSlot.E, 650);
-            R = new Spell(SpellSlot.R, 20);
+            spellQ = new Spell(SpellSlot.Q, Player.AttackRange + 50);
+            spellW = new Spell(SpellSlot.W, 600);
+            spellE = new Spell(SpellSlot.E, 650);
+            spellR = new Spell(SpellSlot.R, 20);
 
-            Menu = new Menu("Nasus the Lumber Jack", "kpNasus", true);
-            Menu.AddToMainMenu();
+            Config = new Menu("Nasus the Lumber Jack", "kpNasus", true);
+            Config.AddToMainMenu();
 
             // Target Selector
-            var tsMenu = new Menu("Target Selector", "ts");
-            TargetSelector.AddToMenu(tsMenu);
-            Menu.AddSubMenu(tsMenu);
+            var targetSelector = new Menu("Target Selector", "tsMenu");
+            TargetSelector.AddToMenu(targetSelector);
+            Config.AddSubMenu(targetSelector);
 
             // Orbwalker
             var orbwalkMenu = new Menu("Orbwalker", "Orbwalker");
             Orbwalker = new Orbwalking.Orbwalker(orbwalkMenu);
-            Menu.AddSubMenu(orbwalkMenu);
+            Config.AddSubMenu(orbwalkMenu);
 
             // Combo
-            var comboMenu = new Menu("Combo Menu", "combo");
-            comboMenu.AddItem(new MenuItem("useQCombo", "Use Q")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useWCombo", "Use W")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useECombo", "Use E")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useRCombo", "Use R")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useRHP", "HP before using R").SetValue(new Slider(35, 0, 100)));
-            Menu.AddSubMenu(comboMenu);
+            var comboMenu = new Menu("Combo Config", "combo");
+            comboMenu.AddItem(new MenuItem("useQCombo", "Use spellQ")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useWCombo", "Use spellW")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useECombo", "Use spellE")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useRCombo", "Use spellR")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useRHP", "HP before using spellR").SetValue(new Slider(35)));
+            Config.AddSubMenu(comboMenu);
 
             // LastHit
-            var lastHitMenu = new Menu("LastHit Menu", "lasthit");
-            lastHitMenu.AddItem(new MenuItem("useQLastHit", "Use Q To LastHit")).SetValue(true);
-            lastHitMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using Q").SetValue(new Slider(50, 0, 100)));
-            Menu.AddSubMenu(lastHitMenu);
+            var lastHitMenu = new Menu("LastHit Config", "lasthit");
+            lastHitMenu.AddItem(new MenuItem("useQLastHit", "Use spellQ To LastHit")).SetValue(true);
+            lastHitMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using spellQ").SetValue(new Slider(50)));
+            Config.AddSubMenu(lastHitMenu);
 
             // Harass
-            var harassMenu = new Menu("Harass Menu", "harass");
-            harassMenu.AddItem(new MenuItem("useQHarass", "Use Q To Harass")).SetValue(false);
-            harassMenu.AddItem(new MenuItem("useQHarass2", "Use Q To LastHit")).SetValue(true);
-            harassMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using Q").SetValue(new Slider(50, 0, 100)));
-            harassMenu.AddItem(new MenuItem("useWHarass", "Use W")).SetValue(false);
-            harassMenu.AddItem(new MenuItem("useEHarass", "Use E to Harass")).SetValue(false);
-            Menu.AddSubMenu(harassMenu);
+            var harassMenu = new Menu("Harass Config", "harass");
+            harassMenu.AddItem(new MenuItem("useQHarass", "Use spellQ To Harass")).SetValue(false);
+            harassMenu.AddItem(new MenuItem("useQHarass2", "Use spellQ To LastHit")).SetValue(true);
+            harassMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using spellQ").SetValue(new Slider(50)));
+            harassMenu.AddItem(new MenuItem("useWHarass", "Use spellW")).SetValue(false);
+            harassMenu.AddItem(new MenuItem("useEHarass", "Use spellE to Harass")).SetValue(false);
+            Config.AddSubMenu(harassMenu);
 
             // LaneClear
-            var laneClearMenu = new Menu("LaneClear Menu", "laneclear");
-            laneClearMenu.AddItem(new MenuItem("laneclearQ", "Use Q only when killable")).SetValue(true);
-            laneClearMenu.AddItem(new MenuItem("laneclearE", "Use E")).SetValue(true);
-            laneClearMenu.AddItem(new MenuItem("eKillOnly", "Use E only if killable")).SetValue(false);
-            Menu.AddSubMenu(laneClearMenu);
+            var laneClearMenu = new Menu("LaneClear Config", "laneclear");
+            laneClearMenu.AddItem(new MenuItem("laneclearQ", "Use spellQ only when killable")).SetValue(true);
+            laneClearMenu.AddItem(new MenuItem("laneclearE", "Use spellE")).SetValue(true);
+            laneClearMenu.AddItem(new MenuItem("eKillOnly", "Use spellE only if killable")).SetValue(false);
+            Config.AddSubMenu(laneClearMenu);
             
             // Misc
-            var miscMenu = new Menu("Misc Menu", "misc");
-            miscMenu.AddItem(new MenuItem("aaDisable", "Disable AA if Q isn't active during LastHit and Mixed")).SetValue(false);
-            Menu.AddSubMenu(miscMenu);
+            var miscMenu = new Menu("Misc Config", "misc");
+            miscMenu.AddItem(new MenuItem("aaDisable", "Disable AA if spellQ isn't active during LastHit and Mixed")).SetValue(false);
+            Config.AddSubMenu(miscMenu);
 
             // Drawing
             var drawMenu = new Menu("Drawing", "Drawing");
-            drawMenu.AddItem(new MenuItem("DrawE", "Draw E Range")).SetValue(true);
-            Menu.AddSubMenu(drawMenu);
+            drawMenu.AddItem(new MenuItem("DrawE", "Draw spellE Range")).SetValue(true);
+            Config.AddSubMenu(drawMenu);
             
-            // Notification
-            Notifications.AddNotification("Nasus The Lumber Jack", 10000, true);
-            Notifications.AddNotification("Version 1.0.1.0", 10000, true);
+            // PrintChat
+            Game.PrintChat("Nasus The Lumber Jack Loaded");
 
             Game.OnUpdate += Game_OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
-            Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
+            Orbwalking.BeforeAttack += OrbwalkingBeforeAttack;
         }
 
         #endregion
 
-        #region Methods
-
-        #region Combo
-
         /// <summary>
         /// Combo Mode
         /// </summary>
-        static void Combo()
+        private static void Combo()
         {
-            var wtarget = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-            var etarget = TargetSelector.GetTarget(E.Range + E.Width, TargetSelector.DamageType.Magical);
+            var wtarget = TargetSelector.GetTarget(spellW.Range, TargetSelector.DamageType.Physical);
+            var etarget = TargetSelector.GetTarget(spellE.Range + spellE.Width, TargetSelector.DamageType.Magical);
 
-            if (wtarget == null || !wtarget.IsValid || etarget == null || !etarget.IsValid)
+            var useWCombo = Config.SubMenu("combo").Item("useWCombo").GetValue<bool>();
+            var useECombo = Config.SubMenu("combo").Item("useECombo").GetValue<bool>();
+            var useRCombo = Config.SubMenu("combo").Item("useRCombo").GetValue<bool>();
+            var useRhp = Config.SubMenu("combo").Item("useRHP").GetValue<Slider>().Value;
+
+            // spellW
+            if (wtarget != null)
             {
-                return;
+                if (useWCombo && spellW.IsReady() && spellW.IsInRange(wtarget))
+                {
+                    spellW.Cast(wtarget);
+                }
             }
 
-            else
+            if (etarget != null)
             {
-                var useWCombo = Menu.SubMenu("combo").Item("useWCombo").GetValue<bool>();
-                var useECombo = Menu.SubMenu("combo").Item("useECombo").GetValue<bool>();
-                var useRCombo = Menu.SubMenu("combo").Item("useRCombo").GetValue<bool>();
-                var useRHP = Menu.SubMenu("combo").Item("useRHP").GetValue<Slider>().Value;
-
-                // W
-                if (useWCombo && W.IsReady() && W.IsInRange(wtarget))
+                // spellE
+                if (useECombo && spellE.IsReady() && etarget.IsValidTarget() && spellE.IsInRange(etarget))
                 {
-                    W.Cast(wtarget);
-                }
-                else
-                {
-                    return;
-                }
-
-                // E
-                if (useECombo && E.IsReady() && etarget.IsValidTarget() && E.IsInRange(etarget))
-                {
-                    var prediction = E.GetPrediction(etarget).Hitchance;
+                    var prediction = spellE.GetPrediction(etarget).Hitchance;
                     if (prediction >= HitChance.VeryHigh)
                     {
-                        E.Cast(etarget);
+                        spellE.Cast(etarget);
                     }
                     else
                     {
                         return;
                     }
-                }
+                } 
+            }
 
-                // R
-                if (useRCombo && R.IsReady() && Player.CountEnemiesInRange(E.Range) >= 1 && Player.HealthPercent <= useRHP)
-                {
-                    R.CastOnUnit(Player);
-                }
-                else
-                {
-                    return;
-                }
+            // spellR
+            if (useRCombo && spellR.IsReady() && Player.CountEnemiesInRange(spellE.Range) >= 1 && Player.HealthPercent <= useRhp)
+            {
+                spellR.CastOnUnit(Player);
             }
         }
-
-        #endregion
-
-        #region LaneClear
 
         /// <summary>
         /// LaneClear Mode
         /// </summary>
-        static void LaneClear()
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "Reviewed. Suppression is OK here.")]
+        private static void LaneClear()
         {
-            var qMinion = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-            var laneclearQ = Menu.SubMenu("laneclear").Item("laneclearQ").GetValue<bool>();
-            var laneclearE = Menu.SubMenu("laneclear").Item("laneclearE").GetValue<bool>();
-            var eKillOnly = Menu.SubMenu("laneclear").Item("eKillOnly").GetValue<bool>();
-            var eMinion = MinionManager.GetMinions(E.Range + E.Width, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-            var eLocation = E.GetCircularFarmLocation(eMinion, E.Range);
+            var qMinion = MinionManager.GetMinions(spellQ.Range);
+            var laneclearQ = Config.SubMenu("laneclear").Item("laneclearQ").GetValue<bool>();
+            var laneclearE = Config.SubMenu("laneclear").Item("laneclearE").GetValue<bool>();
+            var eKillOnly = Config.SubMenu("laneclear").Item("eKillOnly").GetValue<bool>();
+            var eMinion = MinionManager.GetMinions(spellE.Range + spellE.Width);
+            var eLocation = spellE.GetCircularFarmLocation(eMinion, spellE.Range);
 
             if (laneclearQ)
             {
                 foreach (var minion in qMinion)
                 {
-                    if (minion.Health <= Q.GetDamage(minion) && laneclearQ)
+                    if (minion.Health <= spellQ.GetDamage(minion))
                     {
-                        Q.Cast();
+                        spellQ.Cast();
                         Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                     }
                 }
@@ -235,88 +225,75 @@ namespace NasusTheLumberJack
 
             if (laneclearE && eKillOnly)
             {
-                foreach(var minion in eMinion)
+                foreach (var minion in eMinion)
                 {
-                    if (minion.Health <= E.GetDamage(minion) && E.IsInRange(minion))
+                    if (minion.Health <= spellE.GetDamage(minion) && spellE.IsInRange(minion))
                     {
-                        E.Cast(eLocation.Position);
+                        spellE.Cast(eLocation.Position);
                     }
                 }
             }
-
             else if (laneclearE)
             {
                 foreach (var minion in eMinion)
                 {
-                    if (E.IsInRange(minion))
+                    if (spellE.IsInRange(minion))
                     {
-                        E.Cast(eLocation.Position);
+                        spellE.Cast(eLocation.Position);
                     }
                 }
             }
-
-            else
-            {
-                return;
-            }
         }
-
-        #endregion
-
-        #region Harass
 
         /// <summary>
         /// Harass Mode
         /// </summary>
-        static void Harass()
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "Reviewed. Suppression is OK here.")]
+        private static void Harass()
         {
-            var useQHarass = Menu.SubMenu("harass").Item("useQHarass").GetValue<bool>();
-            var useWHarass = Menu.SubMenu("harass").Item("useWHarass").GetValue<bool>();
-            var useEHarass = Menu.SubMenu("harass").Item("useEHarass").GetValue<bool>();
+            var useQHarass = Config.SubMenu("harass").Item("useQHarass").GetValue<bool>();
+            var useWHarass = Config.SubMenu("harass").Item("useWHarass").GetValue<bool>();
+            var useEHarass = Config.SubMenu("harass").Item("useEHarass").GetValue<bool>();
 
             if (useQHarass)
             {
-                var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+                var target = TargetSelector.GetTarget(spellQ.Range, TargetSelector.DamageType.Physical);
 
-                if (target.IsValidTarget() && Q.IsInRange(target) && Q.IsReady())
+                if (target.IsValidTarget() && spellQ.IsInRange(target) && spellQ.IsReady())
                 {
-                    Q.Cast();
+                    spellQ.Cast();
                     Player.IssueOrder(GameObjectOrder.AttackUnit, target);
                 }
             }
 
             if (useWHarass)
             {
-                var wTarget = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+                var wTarget = TargetSelector.GetTarget(spellW.Range, TargetSelector.DamageType.Physical);
 
-                if (wTarget.IsValidTarget(W.Range, true) && W.IsInRange(wTarget) && W.IsReady())
+                if (wTarget.IsValidTarget(spellW.Range, true) && spellW.IsInRange(wTarget) && spellW.IsReady())
                 {
-                    W.Cast(wTarget);
+                    spellW.Cast(wTarget);
                 }
             }
 
             if (useEHarass)
             {
-                var eTarget = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+                var eTarget = TargetSelector.GetTarget(spellE.Range, TargetSelector.DamageType.Magical);
 
-                if (eTarget.IsValidTarget(E.Range, true) && E.IsInRange(eTarget) && E.IsReady())
+                if (eTarget.IsValidTarget(spellE.Range, true) && spellE.IsInRange(eTarget) && spellE.IsReady())
                 {
-                    E.CastIfHitchanceEquals(eTarget, HitChance.VeryHigh);
+                    spellE.CastIfHitchanceEquals(eTarget, HitChance.VeryHigh);
                 }
             }
         }
 
-        #endregion
-
-        #endregion
-
-        #region OnUpdate
-
         /// <summary>
         /// Called when game update
         /// </summary>
-        /// <param name="args"></param>
-        static void Game_OnUpdate(EventArgs args)
+        /// <param name="args">
+        /// The Args
+        /// </param>
+        private static void Game_OnUpdate(EventArgs args)
         {
             switch (Orbwalker.ActiveMode)
             {
@@ -332,49 +309,42 @@ namespace NasusTheLumberJack
             }
         }
 
-        #endregion
-
-        #region BeforeAttack
-
-        static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        /// <summary>
+        /// Action Before Attacking
+        /// </summary>
+        /// <param name="args">
+        /// The Args
+        /// </param>
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "Reviewed. Suppression is OK here.")]
+        private static void OrbwalkingBeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
             switch (Orbwalker.ActiveMode)
             {
-                #region Combo
-
                 case Orbwalking.OrbwalkingMode.Combo:
-                    var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
-                    var useQCombo = Menu.SubMenu("combo").Item("useQCombo").GetValue<bool>();
+                    var target = TargetSelector.GetTarget(spellQ.Range, TargetSelector.DamageType.Physical);
+                    var useQCombo = Config.SubMenu("combo").Item("useQCombo").GetValue<bool>();
 
-                    if (target.IsValidTarget() && Q.IsInRange(target) && Q.IsReady() && useQCombo)
+                    if (target.IsValidTarget() && spellQ.IsInRange(target) && spellQ.IsReady() && useQCombo)
                     {
-                        Q.Cast();
+                        spellQ.Cast();
                         Player.IssueOrder(GameObjectOrder.AttackUnit, target);
                     }
-                    else
-                    {
-                        return;
-                    }
+
                     break;
-
-                #endregion
-
-                #region LastHit
-
                 case Orbwalking.OrbwalkingMode.LastHit:
-                    var useQLastHit = Menu.SubMenu("lasthit").Item("useQLastHit").GetValue<bool>();
-                    var aaDisable = Menu.SubMenu("misc").Item("aaDisable").GetValue<bool>();
-                    var manamanagerQ = Menu.SubMenu("lasthit").Item("manamanagerQ").GetValue<Slider>().Value;
-                    var minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                    var useQLastHit = Config.SubMenu("lasthit").Item("useQLastHit").GetValue<bool>();
+                    var aaDisable = Config.SubMenu("misc").Item("aaDisable").GetValue<bool>();
+                    var manamanagerQ = Config.SubMenu("lasthit").Item("manamanagerQ").GetValue<Slider>().Value;
+                    var minionQ = MinionManager.GetMinions(spellQ.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
 
                     if (useQLastHit && aaDisable)
                     {
                         args.Process = false;
                         foreach (var minion in minionQ)
                         {
-                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= spellQ.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && spellQ.IsReady())
                             {
-                                Q.Cast();
+                                spellQ.Cast();
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                                 args.Process = true;
                             }
@@ -384,89 +354,68 @@ namespace NasusTheLumberJack
                     {
                         foreach (var minion in minionQ)
                         {
-                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= spellQ.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && spellQ.IsReady())
                             {
-                                Q.Cast();
+                                spellQ.Cast();
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                             }
                         }
                     }
-                    else
-                    {
-                        return;
-                    }
+
                     break;
-
-                #endregion
-
-                #region Mixed
-
                 case Orbwalking.OrbwalkingMode.Mixed:
-                    var useQHarass2 = Menu.SubMenu("harass").Item("useQHarass2").GetValue<bool>();
-                    aaDisable = Menu.SubMenu("misc").Item("aaDisable").GetValue<bool>();
+                    var useQHarass2 = Config.SubMenu("harass").Item("useQHarass2").GetValue<bool>();
+                    aaDisable = Config.SubMenu("misc").Item("aaDisable").GetValue<bool>();
 
                     if (useQHarass2 && aaDisable)
                     {
                         args.Process = false;
-                        minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-                        manamanagerQ = Menu.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
+                        minionQ = MinionManager.GetMinions(spellQ.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                        manamanagerQ = Config.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
 
                         foreach (var minion in minionQ)
                         {
-                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= spellQ.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && spellQ.IsReady())
                             {
-                                Q.Cast();
+                                spellQ.Cast();
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                                 args.Process = true;
                             }
                         }
                     }
-
                     else if (useQHarass2)
                     {
-                        minionQ = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-                        manamanagerQ = Menu.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
+                        minionQ = MinionManager.GetMinions(spellQ.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                        manamanagerQ = Config.SubMenu("harass").Item("manamanagerQ").GetValue<Slider>().Value;
 
                         foreach (var minion in minionQ)
                         {
-                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= Q.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && Q.IsReady())
+                            if (manamanagerQ <= Player.ManaPercent && minion.Health <= spellQ.GetDamage(minion) + Player.GetAutoAttackDamage(minion) && spellQ.IsReady())
                             {
-                                Q.Cast();
+                                spellQ.Cast();
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                             }
                         }
                     }
 
-                    else
-                    {
-                        return;
-                    }
-
                     break;
-
-                #endregion
             }
         }
-
-        #endregion
-
-        #region Drawing
 
         /// <summary>
         /// Calls when game draws
         /// </summary>
-        /// <param name="args"></param>
-        static void Drawing_OnDraw(EventArgs args)
+        /// <param name="args">
+        /// The Args
+        /// </param>
+        private static void Drawing_OnDraw(EventArgs args)
         {
-            var DrawE = Menu.SubMenu("Drawing").Item("DrawE").GetValue<bool>();
+            var drawE = Config.SubMenu("Drawing").Item("DrawE").GetValue<bool>();
 
-            if (DrawE)
+            if (drawE)
             {
-                Render.Circle.DrawCircle(Player.Position, E.Range, E.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                Render.Circle.DrawCircle(Player.Position, spellE.Range, spellE.IsReady() ? Color.YellowGreen : Color.Red);
             }
         }
-
-        #endregion
-
     }
 }
