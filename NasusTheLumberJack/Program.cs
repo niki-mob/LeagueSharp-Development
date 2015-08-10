@@ -112,8 +112,8 @@ namespace NasusTheLumberJack
 
             // LastHit
             var lastHitMenu = new Menu("LastHit Config", "lasthit");
-            lastHitMenu.AddItem(new MenuItem("useQLastHit", "Use spellQ To LastHit")).SetValue(true);
-            lastHitMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using spellQ").SetValue(new Slider(50)));
+            lastHitMenu.AddItem(new MenuItem("useQLastHit", "Use Q To LastHit")).SetValue(true);
+            lastHitMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using Q").SetValue(new Slider(50)));
             Config.AddSubMenu(lastHitMenu);
 
             // Harass
