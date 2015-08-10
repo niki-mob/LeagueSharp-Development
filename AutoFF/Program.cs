@@ -38,7 +38,7 @@ namespace AutoFF
         }
 
         /// <summary>
-        /// The main.
+        /// Called when Program Starts
         /// </summary>
         private static void Main()
         {
@@ -46,10 +46,10 @@ namespace AutoFF
         }
 
         /// <summary>
-        /// The game_ on game load.
+        /// Called when Game Loads
         /// </summary>
         /// <param name="args">
-        /// The args.
+        /// The Args
         /// </param>
         private static void Game_OnGameLoad(EventArgs args)
         {
