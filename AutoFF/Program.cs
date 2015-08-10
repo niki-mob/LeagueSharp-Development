@@ -1,55 +1,82 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-
 namespace AutoFF
 {
-    class Program
-    {
-        public static Menu Config;
+    using System;
 
-        static void Main(string[] args)
+    using LeagueSharp;
+    using LeagueSharp.Common;
+
+    /// <summary>
+    /// The program.
+    /// </summary>
+    internal class Program
+    {
+        /// <summary>
+        /// The config.
+        /// </summary>
+        private static Menu config;
+
+        /// <summary>
+        /// The last surrender time.
+        /// </summary>
+        /// <returns>
+        /// The surrender time.
+        /// </returns>
+        private static float lastSurrenderTime;
+
+        /// <summary>
+        /// Should I say Surrender?
+        /// </summary>
+        /// <param name="gameTime">
+        /// Current Game Time.
+        /// </param>
+        /// <returns>
+        /// Returns if I should surrender.
+        /// </returns>
+        private static bool Surrender(float gameTime)
+        {
+            return (gameTime + 30) >= lastSurrenderTime;
+        }
+
+        /// <summary>
+        /// The main.
+        /// </summary>
+        private static void Main()
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
-        static void Game_OnGameLoad(EventArgs args)
+        /// <summary>
+        /// The game_ on game load.
+        /// </summary>
+        /// <param name="args">
+        /// The args.
+        /// </param>
+        private static void Game_OnGameLoad(EventArgs args)
         {
-            Config = new Menu("Auto Surrender", "menu", true);
+            config = new Menu("Auto Surrender", "menu", true);
 
-            Config.AddItem(new MenuItem("toggle", "Auto Surrender at Time Set").SetValue(true));
-            Config.AddItem(new MenuItem("time", "Set Time for Surrender").SetValue(new Slider(20, 15, 120)));
-            Config.AddToMainMenu();
+            config.AddItem(new MenuItem("toggle", "Auto Surrender at Time Set").SetValue(true));
+            config.AddItem(new MenuItem("time", "Set Time for Surrender").SetValue(new Slider(20, 15, 120)));
+            config.AddToMainMenu();
 
-            Notifications.AddNotification("Auto FF Initialized", 10000, true);
-
+            Game.PrintChat("<font color='#01DF3A'>Auto FF - Initialized</font>");
             Game.OnUpdate += Game_OnUpdate;
         }
 
-        static void Game_OnUpdate(EventArgs args)
+        /// <summary>
+        /// The game_ on update.
+        /// </summary>
+        /// <param name="args">
+        /// The args.
+        /// </param>
+        private static void Game_OnUpdate(EventArgs args)
         {
-            var time = Config.Item("time").GetValue<Slider>().Value;
-            var surrender = false;
-            var surrendertime = 0;
+            var time = config.Item("time").GetValue<Slider>().Value;
 
-            if (surrender)
-            {
-                surrendertime += 1;
-                if (surrendertime >= 3000)
-                {
-                    surrender = false;
-                }
-            }
-
-            if (Game.ClockTime >= time * 60 && Config.Item("toggle").GetValue<bool>() && !surrender)
+            if (Game.Time >= time * 60 && config.Item("toggle").GetValue<bool>() && Surrender(Game.Time))
             {
                 Game.Say("/ff");
-                surrender = true;
+                lastSurrenderTime = Game.ClockTime;
             }
         }
     }
