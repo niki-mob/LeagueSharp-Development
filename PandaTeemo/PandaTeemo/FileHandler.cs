@@ -1,13 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-
-namespace PandaTeemo
+﻿namespace PandaTeemo
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
+    using LeagueSharp;
+    using LeagueSharp.Common;
+
+    using SharpDX;
+
     /// <summary>
     /// Original Code Credit: AiM
     /// </summary>
@@ -20,22 +22,22 @@ namespace PandaTeemo
         /// </summary>
         public static List<Vector3> Position = new List<Vector3>();
 
-        static readonly string ShroomLocation = LeagueSharp.Common.Config.AppDataDirectory + @"\PandaTeemo\";
+        static readonly string ShroomLocation = Config.AppDataDirectory + @"\PandaTeemo\";
 
         /// <summary>
         /// File Location for X
         /// </summary>
-        static string xFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "xFile" + ".txt";
+        static string xFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "xFile" + ".txt";
 
         /// <summary>
         /// File Location for Y
         /// </summary>
-        static string yFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "yFile" + ".txt";
+        static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
 
         /// <summary>
         /// File Location for Z
         /// </summary>
-        static string zFile = ShroomLocation + Utility.Map.GetMap().Type.ToString() + @"\" + "zFile" + ".txt";
+        static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
 
         /// <summary>
         /// Array of X String
@@ -55,17 +57,17 @@ namespace PandaTeemo
         /// <summary>
         /// Array of X Int
         /// </summary>
-        public static int[] xInt = new int[xString.Count()];
+        public static int[] XInt = new int[xString.Count()];
 
         /// <summary>
         /// Array of Z Int
         /// </summary>
-        public static int[] zInt = new int[zString.Count()];
+        public static int[] ZInt = new int[zString.Count()];
 
         /// <summary>
         /// Array of Y Int
         /// </summary>
-        public static int[] yInt = new int[yString.Count()];
+        public static int[] YInt = new int[yString.Count()];
         
         #endregion
 
@@ -91,11 +93,11 @@ namespace PandaTeemo
             if (!Directory.Exists(ShroomLocation))
             {
                 Directory.CreateDirectory(ShroomLocation);
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.CrystalScar.ToString());
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.HowlingAbyss.ToString());
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.SummonersRift.ToString());
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.TwistedTreeline.ToString());
-                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.Unknown.ToString());
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.CrystalScar);
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.HowlingAbyss);
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.SummonersRift);
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.TwistedTreeline);
+                Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.Unknown);
                 CreateFile();
             }
 
@@ -146,9 +148,9 @@ namespace PandaTeemo
         {
             #region Get Location
 
-            for (var i = 0; i < xInt.Count() && i < yInt.Count() && i < zInt.Count(); i++)
+            for (var i = 0; i < XInt.Count() && i < YInt.Count() && i < ZInt.Count(); i++)
             {
-                Position.Add(new Vector3(xInt[i], zInt[i], yInt[i]));
+                Position.Add(new Vector3(XInt[i], ZInt[i], YInt[i]));
                 if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
                 {
                     Game.PrintChat(Position[i].ToString());
@@ -171,21 +173,20 @@ namespace PandaTeemo
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                xInt[i] = Convert.ToInt32(xString[i]);
+                XInt[i] = Convert.ToInt32(xString[i]);
             }
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                zInt[i] = Convert.ToInt32(zString[i]);
+                ZInt[i] = Convert.ToInt32(zString[i]);
             }
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                yInt[i] = Convert.ToInt32(yString[i]);
+                YInt[i] = Convert.ToInt32(yString[i]);
             }
 
             GetShroomLocation();
-            Notifications.AddNotification("FileHandler Initialized", 10000, true);
 
             if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
             {

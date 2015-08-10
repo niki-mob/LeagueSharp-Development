@@ -1,13 +1,15 @@
-﻿﻿using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-
-namespace PandaTeemo
+﻿﻿namespace PandaTeemo
 {
+    using System;
+    using System.Linq;
+
+    using LeagueSharp;
+    using LeagueSharp.Common;
+
+    using SharpDX;
+
+    using Color = System.Drawing.Color;
+
     /// <summary>
     /// Made by KarmaPanda
     /// </summary>
@@ -23,7 +25,7 @@ namespace PandaTeemo
         /// <summary>
         /// Array of ADC Names
         /// </summary>
-        static string[] Marksman = { "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Jinx", "Kalista", "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Urgot", "Varus", "Vayne" };
+        static readonly string[] Marksman = { "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Jinx", "Kalista", "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Urgot", "Varus", "Vayne" };
 
         /// <summary>
         /// Q
@@ -46,7 +48,7 @@ namespace PandaTeemo
         public static Spell R;
 
         public static ShroomTables ShroomPositions;
-        public static FileHandler _FileHandler;
+        public static FileHandler FileHandler;
         
         /// <summary>
         /// Orbwalker
@@ -82,7 +84,7 @@ namespace PandaTeemo
         /// <summary>
         /// Teemo's R Range
         /// </summary>
-        public static float rRange
+        public static float RRange
         {
             get { return 300 * R.Level; }
         }
@@ -90,10 +92,8 @@ namespace PandaTeemo
         /// <summary>
         /// Called when program starts
         /// </summary>
-        /// <param name="args"></param>
-        static void Main(string[] args)
+        static void Main()
         {
-            Hacks.PingHack = true;
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -159,7 +159,7 @@ namespace PandaTeemo
 
             // LaneClear Menu
             laneclear.AddItem(new MenuItem("qclear", "LaneClear with Q").SetValue(true));
-            laneclear.AddItem(new MenuItem("qManaManager", "Q Mana Manager").SetValue(new Slider(75, 0, 100)));
+            laneclear.AddItem(new MenuItem("qManaManager", "Q Mana Manager").SetValue(new Slider(75)));
             laneclear.AddItem(new MenuItem("attackTurret", "Attack Turret").SetValue(true));
             laneclear.AddItem(new MenuItem("attackWard", "Attack Ward").SetValue(true));
             laneclear.AddItem(new MenuItem("rclear", "LaneClear with R").SetValue(true));
@@ -175,7 +175,7 @@ namespace PandaTeemo
             interrupt.AddItem(new MenuItem("intChance", "Danger Level before using Q").SetValue(new StringList(new[] { "High", "Medium", "Low" })));
             interrupt.AddItem(new MenuItem("gapR", "Gapclose with R").SetValue(true));
 
-            // KS Menu
+            // KillSteal Menu
             ks.AddItem(new MenuItem("KSQ", "KillSteal with Q").SetValue(true));
             ks.AddItem(new MenuItem("KSR", "KillSteal with R").SetValue(true));
             ks.AddItem(new MenuItem("KSAA", "KillSteal with AutoAttack").SetValue(true));
@@ -218,17 +218,15 @@ namespace PandaTeemo
             Game.OnUpdate += Game_OnUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Orbwalking.AfterAttack += Orbwalking_AfterAttack;
-            Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
+            Orbwalking.AfterAttack += OrbwalkingAfterAttack;
+            Orbwalking.BeforeAttack += OrbwalkingBeforeAttack;
             Drawing.OnDraw += Drawing_OnDraw;
 
             // GG PrintChat Bik™
             Game.PrintChat("<font color='#FBF5EF'>Game.PrintChat Bik</font> - <font color = '#01DF3A'>PandaTeemo v1.7.5.2 Loaded</font>");
-            Notifications.AddNotification("PandaTeemo Loaded", 10000, true);
-            Notifications.AddNotification("Version 1.7.5.2", 10000, true);
 
             // Loads ShroomPosition
-            _FileHandler = new FileHandler();
+            FileHandler = new FileHandler();
             ShroomPositions = new ShroomTables();
         }
 
@@ -240,26 +238,21 @@ namespace PandaTeemo
         /// Actions before attacking
         /// </summary>
         /// <param name="args">Attack Action</param>
-        static void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        static void OrbwalkingBeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
             #region LastHit
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 args.Process = false;
-                foreach (var minion in MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange, MinionTypes.All))
+                foreach (var minion in MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange))
                 {
                     if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion))
                     {
                         Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                        args.Process = true;
-                        return;
                     }
-                    else
-                    {
-                        args.Process = false;
-                        return;
-                    }
+                    args.Process = false;
+                    return;
                 }
             }
 
@@ -271,34 +264,30 @@ namespace PandaTeemo
             {
                 args.Process = false;
                 var enemy = HeroManager.Enemies.OrderBy(t => t.Health).FirstOrDefault();
-                var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange, MinionTypes.All).Where(t => t.IsEnemy && Orbwalker.InAutoAttackRange(t)).OrderBy(t => t.Health).FirstOrDefault();
+                var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange).Where(t => t.IsEnemy && Orbwalker.InAutoAttackRange(t)).OrderBy(t => t.Health).FirstOrDefault();
+
+                if (minion == null)
+                {
+                    return;
+                }
 
                 if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                    args.Process = true;
-                    return;
                 }
 
-                else if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                    args.Process = true;
-                    return;
                 }
 
-                else if (minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                if (minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
-                    args.Process = true;
-                    return;
                 }
 
-                else
-                {
-                    args.Process = false;
-                    return;
-                }
+                args.Process = false;
+                return;
             }
 
             #endregion
@@ -307,75 +296,14 @@ namespace PandaTeemo
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
-                args.Process = false;
-
-                foreach (var minion in MinionManager.GetMinions(Player.AttackRange, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health))
-                {
-                    #region Variables
-
-                    var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
-
-                    #endregion
-
-                    #region Cannot Kill Minion
-
-                    if (Player.GetAutoAttackDamage(minion) + Program.TeemoE(minion) < minion.Health || Q.GetDamage(minion) < minion.Health)
-                    {
-                        Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                        args.Process = true;
-                    }
-
-                    #endregion
-
-                    #region Can Kill Minion
-
-                    else if (minion.Health <= Player.GetAutoAttackDamage(minion) + Program.TeemoE(minion) || minion.Health <= Q.GetDamage(minion))
-                    {
-                        args.Process = false;
-                        var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
-                        if (useQ)
-                        {
-                            if (Q.IsReady() && Q.IsInRange(minion) && Q.GetDamage(minion) >= minion.Health && qManaManager <= (int)Player.ManaPercent)
-                            {
-                                Q.CastOnUnit(minion, Packets);
-                                args.Process = true;
-                            }
-
-                            else if (Player.Distance3D(minion) <= Player.AttackRange)
-                            {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                                args.Process = true;
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                            args.Process = true;
-                            return;
-                        }
-                    }
-
-                    #endregion
-
-                    #region No Minions
-
-                    else
-                    {
-                        args.Process = true;
-                        return;
-                    }
-
-                    #endregion
-                }
 
                 var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
                 var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
                 var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
                 var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
                 var nexus = ObjectManager.Get<Obj_HQ>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
-                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault();
-                var mob = ObjectManager.Get<Obj_AI_Base>().Where(t => t.IsMinion && t.IsEnemy).OrderBy(t => t.Health);
+                var ward = MinionManager.GetMinions(Player.AttackRange, MinionTypes.Wards).FirstOrDefault();
+                var mob = MinionManager.GetMinions(Player.AttackRange, MinionTypes.All, MinionTeam.NotAlly);
 
                 foreach (var m in mob)
                 {
@@ -411,7 +339,6 @@ namespace PandaTeemo
                             if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy)
                             {
                                 Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
-                                Utility.DelayAction.Add(1500, () => Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos));
                             }
                         }
 
@@ -431,6 +358,11 @@ namespace PandaTeemo
 
                             if (attackTurret)
                             {
+                                if (m.Health < Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                                }
+
                                 if (turret != null && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
                                 {
                                     Player.IssueOrder(GameObjectOrder.AttackUnit, turret);
@@ -451,10 +383,14 @@ namespace PandaTeemo
 
                             if (attackWard)
                             {
+                                if (m.Health < Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                                }
+
                                 if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
                                 {
                                     Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
-                                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
                                 }
                             }
 
@@ -464,8 +400,55 @@ namespace PandaTeemo
 
                     else
                     {
-                        args.Process = true;
-                        return;
+                        #region Variables
+
+                        var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
+
+                        #endregion
+
+                        #region Cannot Kill Minion
+
+                        if (Player.GetAutoAttackDamage(m) + TeemoE(m) < m.Health)
+                        {
+                            Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                        }
+
+                        #endregion
+
+                        #region Can Kill Minion
+
+                        else if (m.Health <= Player.GetAutoAttackDamage(m) + TeemoE(m) || m.Health <= Q.GetDamage(m))
+                        {
+                            var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
+                            if (useQ)
+                            {
+                                if (Q.IsReady() && Q.IsInRange(m) && Q.GetDamage(m) >= m.Health && qManaManager <= (int)Player.ManaPercent)
+                                {
+                                    Q.CastOnUnit(m, Packets);
+                                }
+
+                                else if (Player.Distance3D(m) <= Player.AttackRange)
+                                {
+                                    Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                                }
+                            }
+                            else
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                            }
+                        }
+
+                        #endregion
+
+                        #region No Minions
+
+                        else
+                        {
+                            args.Process = true;
+                            return;
+                        }
+
+                        #endregion
                     }
                 }
             }
@@ -494,7 +477,7 @@ namespace PandaTeemo
         {
             var gapR = Config.SubMenu("Interrupt").Item("gapR").GetValue<bool>();
 
-            if (gapcloser.Sender.IsValidTarget() && gapcloser.Sender.IsFacing(Player) && gapcloser.Sender.IsTargetable)
+            if (gapR && gapcloser.Sender.IsValidTarget() && gapcloser.Sender.IsFacing(Player) && gapcloser.Sender.IsTargetable)
             {
                 R.Cast(gapcloser.Sender.Position, Packets);
             }
@@ -509,11 +492,11 @@ namespace PandaTeemo
         /// </summary>
         /// <param name="unit">Unit Attacked</param>
         /// <param name="target">Target Attacked</param>
-        static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
+        static void OrbwalkingAfterAttack(AttackableUnit unit, AttackableUnit target)
         {
             var useQCombo = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useQHarass = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
-            var useqADC = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
+            var targetAdc = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
             //var checkAA = Config.SubMenu("Combo").Item("checkAA").GetValue<bool>();
             var t = target as Obj_AI_Hero;
 
@@ -569,15 +552,41 @@ namespace PandaTeemo
 
                 #endregion
 
-                if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                #region Attack ADC Only
+
+                if (targetAdc)
                 {
-                    Q.Cast(t, Packets);
+                    foreach (var adc in Marksman)
+                    {
+                        if (t.CharData.BaseSkinName == adc && useQCombo && Q.IsReady() && Q.IsInRange(t))
+                        {
+                            Q.Cast(t, Packets);
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
                 }
-                    
+
+                #endregion
+
+                #region Attacking the Target
+
                 else
                 {
-                    return;
+                    if (useQCombo && Q.IsReady() && Q.IsInRange(t))
+                    {
+                        Q.Cast(t, Packets);
+                    }
+
+                    else
+                    {
+                        return;
+                    }
                 }
+
+                #endregion
             }
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
@@ -619,7 +628,7 @@ namespace PandaTeemo
                 return;
             }
 
-            var enemies = HeroManager.Enemies.Where(t => t.IsValidTarget() && Orbwalker.InAutoAttackRange(t)).FirstOrDefault();
+            var enemies = HeroManager.Enemies.FirstOrDefault(t => t.IsValidTarget() && Orbwalker.InAutoAttackRange(t));
             var rtarget = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             var useW = Config.SubMenu("Combo").Item("wcombo").GetValue<bool>();
             var useR = Config.SubMenu("Combo").Item("rcombo").GetValue<bool>();
@@ -652,23 +661,13 @@ namespace PandaTeemo
 
             else if (R.IsReady() && useR && rCharge <= rCount && IsShroomed(rtarget.Position))
             {
-                var shroom = ObjectManager.Get<Obj_AI_Base>().Where(t => t.Name == "Noxious Trap").FirstOrDefault().Position;
+                var shroom = ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(t => t.Name == "Noxious Trap").Position;
 
                 if (R.IsInRange(rtarget, Player.CharData.SelectionRadius * R.Level + 2) && IsShroomed(shroom))
                 {
                     R.Cast(shroom);
                 }
-                else
-                {
-                    return;
-                }
             }
-            
-            else
-            {
-                return;
-            }
-
         }
 
         #endregion
@@ -678,15 +677,15 @@ namespace PandaTeemo
         /// <summary>
         /// KillSteal
         /// </summary>
-        static void KS()
+        static void KillSteal()
         {
-            var KSQ = Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>();
-            var KSR = Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>();
-            var KSAA = Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>();
+            var ksq = Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>();
+            var ksr = Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>();
+            var ksaa = Config.SubMenu("KSMenu").Item("KSAA").GetValue<bool>();
 
             #region KillSteal with AA
 
-            if (KSAA)
+            if (ksaa)
             {
                 var aatarget = HeroManager.Enemies.Where(t => 
                     t.IsValidTarget() 
@@ -707,7 +706,7 @@ namespace PandaTeemo
 
             #region KillSteal with Q
 
-            if (KSQ)
+            if (ksq)
             {
                 var target = HeroManager.Enemies.Where(t => t.IsValidTarget()
                     && Q.IsInRange(t) 
@@ -727,7 +726,7 @@ namespace PandaTeemo
 
             #region KillSteal with R
 
-            if (KSR)
+            if (ksr)
             {
                 var target = HeroManager.Enemies.Where(t => t.IsValidTarget() 
                     && R.IsInRange(t) 
@@ -761,11 +760,11 @@ namespace PandaTeemo
             var userKill = Config.SubMenu("LaneClear").Item("userKill").GetValue<bool>();
             var minionR = Config.SubMenu("LaneClear").Item("minionR").GetValue<Slider>().Value;
 
-            if (rLocation.Position != null && minionR <= rLocation.MinionsHit && useR
-                || r2Location.Position != null && minionR <= r2Location.MinionsHit && useR
-                || rLocation.Position != null && r2Location.Position != null && minionR <= rLocation.MinionsHit + r2Location.MinionsHit && useR)
+            if (minionR <= rLocation.MinionsHit && useR
+                || minionR <= r2Location.MinionsHit && useR
+                || minionR <= rLocation.MinionsHit + r2Location.MinionsHit && useR)
             {
-                if (useR && userKill)
+                if (userKill)
                 {
                     foreach (var minion in allMinionsR)
                     {
@@ -773,18 +772,16 @@ namespace PandaTeemo
                             && R.IsReady() 
                             && R.IsInRange(rLocation.Position.To3D()) 
                             && !IsShroomed(rLocation.Position.To3D()) 
-                            && minionR <= rLocation.MinionsHit
-                            && rLocation.Position != null)
+                            && minionR <= rLocation.MinionsHit)
                         {
                             R.Cast(rLocation.Position, Packets);
                             return;
                         }
-                        else if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) 
+                        if (minion.Health <= ObjectManager.Player.GetSpellDamage(minion, SpellSlot.R) 
                             && R.IsReady() 
                             && R.IsInRange(r2Location.Position.To3D()) 
                             && !IsShroomed(r2Location.Position.To3D()) 
-                            && minionR <= r2Location.MinionsHit
-                            && r2Location.Position != null)
+                            && minionR <= r2Location.MinionsHit)
                         {
                             R.Cast(r2Location.Position, Packets);
                             return;
@@ -792,31 +789,23 @@ namespace PandaTeemo
                     }
                 }
 
-                else if (useR)
+                else
                 {
-                    if (rLocation.Position != null 
-                        && R.IsReady() 
+                    if (R.IsReady() 
                         && R.IsInRange(rLocation.Position.To3D()) 
                         && !IsShroomed(rLocation.Position.To3D()) 
                         && minionR <= rLocation.MinionsHit)
                     {
                         R.Cast(rLocation.Position, Packets);
-                        return;
                     }
-                    else if (r2Location.Position != null
-                        && R.IsReady() 
+                    else if (R.IsReady() 
                         && R.IsInRange(r2Location.Position.To3D()) 
                         && !IsShroomed(r2Location.Position.To3D()) 
                         && minionR <= r2Location.MinionsHit)
                     {
                         R.Cast(r2Location.Position, Packets);
-                        return;
                     }
                 }
-            }
-            else
-            {
-                return;
             }
 
             #endregion
@@ -847,10 +836,6 @@ namespace PandaTeemo
                     {
                         Q.CastOnUnit(jungleMobQ, Packets);
                     }
-                    else
-                    {
-                        return;
-                    }
                 }
 
                 if (useR && jungleMobR != null)
@@ -859,16 +844,7 @@ namespace PandaTeemo
                     {
                         R.Cast(jungleMobR.Position, Packets);
                     }
-                    else
-                    {
-                        return;
-                    }
                 }
-            }
-
-            else
-            {
-                return;
             }
         }
 
@@ -894,10 +870,6 @@ namespace PandaTeemo
                 {
                     Q.Cast(sender, Packets);
                 }
-                else
-                {
-                    return;
-                }
             }
 
             // Medium Danger Level
@@ -906,10 +878,6 @@ namespace PandaTeemo
                 if (sender != null)
                 {
                     Q.Cast(sender, Packets);
-                }
-                else
-                {
-                    return;
                 }
             }
 
@@ -920,15 +888,6 @@ namespace PandaTeemo
                 {
                     Q.Cast(sender, Packets);
                 }
-                else
-                {
-                    return;
-                }
-            }
-
-            else
-            {
-                return;
             }
         }
 
@@ -954,7 +913,7 @@ namespace PandaTeemo
                 return;
             }
 
-            var target = HeroManager.Enemies.Where(t => R.IsInRange(t) && t.IsValidTarget()).FirstOrDefault();
+            var target = HeroManager.Enemies.FirstOrDefault(t => R.IsInRange(t) && t.IsValidTarget());
 
             if (target != null)
             {
@@ -962,7 +921,7 @@ namespace PandaTeemo
                     R.Cast(target.Position, Packets);
             }
 
-            else if (target == null)
+            else
             {
                 if (Utility.Map.GetMap().Type == Utility.Map.MapType.SummonersRift)
                 {
@@ -1000,10 +959,6 @@ namespace PandaTeemo
                     {
                         R.Cast(place, Packets);
                     }
-                }
-                else
-                {
-                    return;
                 }
             }
         }
@@ -1048,7 +1003,7 @@ namespace PandaTeemo
         static void AutoQ()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range, MinionTypes.All);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range);
 
             if (target == null)
             {
@@ -1075,8 +1030,6 @@ namespace PandaTeemo
             {
                 Q.Cast(target, Packets);
             }
-
-            return;
         }
 
         #endregion
@@ -1097,7 +1050,6 @@ namespace PandaTeemo
             {
                 W.Cast(Player);
             }
-            return;
         }
 
         #endregion
@@ -1107,10 +1059,10 @@ namespace PandaTeemo
         /// <summary>
         /// Auto Q and W
         /// </summary>
-        static void AutoQW()
+        static void AutoQw()
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range, MinionTypes.All);
+            var allMinionsQ = MinionManager.GetMinions(ObjectManager.Player.Position, Q.Range);
 
             if (!W.IsReady() || !Q.IsReady())
             {
@@ -1141,8 +1093,6 @@ namespace PandaTeemo
             {
                 Q.Cast(target);
             }
-
-            return;
         }
 
         #endregion
@@ -1156,7 +1106,7 @@ namespace PandaTeemo
         static void Game_OnUpdate(EventArgs args)
         {
             //Hacks.ZoomHack = Config.SubMenu("Hacks").Item("zoomHack").GetValue<bool>();
-            R.Range = rRange;
+            R.Range = RRange;
 
             var autoQ = Config.Item("autoQ").GetValue<bool>();
             var autoW = Config.Item("autoW").GetValue<bool>();
@@ -1164,7 +1114,7 @@ namespace PandaTeemo
             // Reworked Auto Q and W
             if (autoQ && autoW)
             {
-                AutoQW();
+                AutoQw();
             }
             else if (autoQ)
             {
@@ -1203,7 +1153,7 @@ namespace PandaTeemo
                         || Config.SubMenu("KSMenu").Item("KSQ").GetValue<bool>() 
                         || Config.SubMenu("KSMenu").Item("KSR").GetValue<bool>())
                     {
-                        KS();
+                        KillSteal();
                     }
                     break;
             }
@@ -1222,7 +1172,7 @@ namespace PandaTeemo
                 Drawing.DrawText(
                     Config.SubMenu("Drawing").SubMenu("debug").Item("x").GetValue<Slider>().Value,
                     Config.SubMenu("Drawing").SubMenu("debug").Item("y").GetValue<Slider>().Value,
-                    System.Drawing.Color.Red,
+                    Color.Red,
                     Player.Position.ToString());
             }
 
@@ -1237,22 +1187,22 @@ namespace PandaTeemo
 
             if (drawQ && colorBlind)
             {
-                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? Color.YellowGreen : Color.Red);
             }
 
             if (drawQ && !colorBlind)
             {
-                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                Render.Circle.DrawCircle(player, Q.Range, Q.IsReady() ? Color.LightGreen : Color.Red);
             }
 
             if (drawR && colorBlind)
             {
-                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.YellowGreen : System.Drawing.Color.Red);
+                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? Color.YellowGreen : Color.Red);
             }
 
             if (drawR && !colorBlind)
             {
-                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? System.Drawing.Color.LightGreen : System.Drawing.Color.Red);
+                Render.Circle.DrawCircle(player, R.Range, R.IsReady() ? Color.LightGreen : Color.Red);
             }
 
             #endregion
@@ -1267,11 +1217,11 @@ namespace PandaTeemo
                 {
                     if (colorBlind)
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.YellowGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.YellowGreen);
                     }
                     else
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.LightGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.LightGreen);
                     }
                 }
             }
@@ -1282,11 +1232,11 @@ namespace PandaTeemo
                 {
                     if (colorBlind)
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.YellowGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.YellowGreen);
                     }
                     else
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.LightGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.LightGreen);
                     }
                 }
             }
@@ -1297,11 +1247,11 @@ namespace PandaTeemo
                 {
                     if (colorBlind)
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.YellowGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.YellowGreen);
                     }
                     else
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red: System.Drawing.Color.LightGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red: Color.LightGreen);
                     }
                 }
             }
@@ -1312,11 +1262,11 @@ namespace PandaTeemo
                 {
                     if (colorBlind)
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.YellowGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.YellowGreen);
                     }
                     else
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.LightGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.LightGreen);
                     }
                 }
             }
@@ -1327,11 +1277,11 @@ namespace PandaTeemo
                 {
                     if (colorBlind)
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.YellowGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.YellowGreen);
                     }
                     else
                     {
-                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? System.Drawing.Color.Red : System.Drawing.Color.LightGreen);
+                        Render.Circle.DrawCircle(place, 100, IsShroomed(place) ? Color.Red : Color.LightGreen);
                     }
                 }
             }
