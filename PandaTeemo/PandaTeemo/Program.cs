@@ -283,16 +283,16 @@
                     {
                         Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
                     }
-                }
 
-                if (minion != null && minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
-                {
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
-                }
+                    else if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion))
+                    {
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                    }
 
-                if (minion != null && minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
-                {
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
+                    else
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -507,13 +507,13 @@
             var useQCombo = Config.SubMenu("Combo").Item("qcombo").GetValue<bool>();
             var useQHarass = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
             var targetAdc = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
-            var checkAA = Config.SubMenu("Misc").Item("checkAA").GetValue<bool>();
+            var checkAa = Config.SubMenu("Misc").Item("checkAA").GetValue<bool>();
             var checkaaRange = (float)Config.SubMenu("Misc").Item("checkaaRange").GetValue<Slider>().Value;
             var t = target as Obj_AI_Hero;
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
-                if (checkAA)
+                if (checkAa)
                 {
                     if (targetAdc)
                     {
@@ -575,7 +575,7 @@
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
-                if (checkAA)
+                if (checkAa)
                 {
                     if (useQHarass && Q.IsReady() && Q.IsInRange(t, -checkaaRange))
                     {
