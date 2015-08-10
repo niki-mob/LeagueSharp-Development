@@ -61,6 +61,21 @@ namespace AutoFF
 
             Game.PrintChat("<font color='#01DF3A'>Auto FF - Initialized</font>");
             Game.OnUpdate += Game_OnUpdate;
+            Game.OnNotify += Game_OnNotify;
+        }
+
+        /// <summary>
+        /// Called when the Game has a notification
+        /// </summary>
+        /// <param name="args">
+        /// The Args
+        /// </param>
+        private static void Game_OnNotify(GameNotifyEventArgs args)
+        {
+            if (string.Equals(args.EventId.ToString(), "OnSurrenderVote") || args.EventId == GameEventId.OnSurrenderVote)
+            {
+                Game.Say("/ff");
+            }
         }
 
         /// <summary>
