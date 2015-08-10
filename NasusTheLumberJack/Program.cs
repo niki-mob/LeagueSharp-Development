@@ -103,11 +103,11 @@ namespace NasusTheLumberJack
 
             // Combo
             var comboMenu = new Menu("Combo Config", "combo");
-            comboMenu.AddItem(new MenuItem("useQCombo", "Use spellQ")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useWCombo", "Use spellW")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useECombo", "Use spellE")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useRCombo", "Use spellR")).SetValue(true);
-            comboMenu.AddItem(new MenuItem("useRHP", "HP before using spellR").SetValue(new Slider(35)));
+            comboMenu.AddItem(new MenuItem("useQCombo", "Use Q")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useWCombo", "Use W")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useECombo", "Use E")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useRCombo", "Use R")).SetValue(true);
+            comboMenu.AddItem(new MenuItem("useRHP", "HP before using R").SetValue(new Slider(35)));
             Config.AddSubMenu(comboMenu);
 
             // LastHit
@@ -118,28 +118,28 @@ namespace NasusTheLumberJack
 
             // Harass
             var harassMenu = new Menu("Harass Config", "harass");
-            harassMenu.AddItem(new MenuItem("useQHarass", "Use spellQ To Harass")).SetValue(false);
-            harassMenu.AddItem(new MenuItem("useQHarass2", "Use spellQ To LastHit")).SetValue(true);
+            harassMenu.AddItem(new MenuItem("useQHarass", "Use Q To Harass")).SetValue(false);
+            harassMenu.AddItem(new MenuItem("useQHarass2", "Use Q To LastHit")).SetValue(true);
             harassMenu.AddItem(new MenuItem("manamanagerQ", "Mana Percent before using spellQ").SetValue(new Slider(50)));
-            harassMenu.AddItem(new MenuItem("useWHarass", "Use spellW")).SetValue(false);
-            harassMenu.AddItem(new MenuItem("useEHarass", "Use spellE to Harass")).SetValue(false);
+            harassMenu.AddItem(new MenuItem("useWHarass", "Use W")).SetValue(false);
+            harassMenu.AddItem(new MenuItem("useEHarass", "Use E to Harass")).SetValue(false);
             Config.AddSubMenu(harassMenu);
 
             // LaneClear
             var laneClearMenu = new Menu("LaneClear Config", "laneclear");
-            laneClearMenu.AddItem(new MenuItem("laneclearQ", "Use spellQ only when killable")).SetValue(true);
-            laneClearMenu.AddItem(new MenuItem("laneclearE", "Use spellE")).SetValue(true);
-            laneClearMenu.AddItem(new MenuItem("eKillOnly", "Use spellE only if killable")).SetValue(false);
+            laneClearMenu.AddItem(new MenuItem("laneclearQ", "Use W only when killable")).SetValue(true);
+            laneClearMenu.AddItem(new MenuItem("laneclearE", "Use E")).SetValue(true);
+            laneClearMenu.AddItem(new MenuItem("eKillOnly", "Use E only if killable")).SetValue(false);
             Config.AddSubMenu(laneClearMenu);
             
             // Misc
             var miscMenu = new Menu("Misc Config", "misc");
-            miscMenu.AddItem(new MenuItem("aaDisable", "Disable AA if spellQ isn't active during LastHit and Mixed")).SetValue(false);
+            miscMenu.AddItem(new MenuItem("aaDisable", "Disable AA if Q isn't active during LastHit and Mixed")).SetValue(false);
             Config.AddSubMenu(miscMenu);
 
             // Drawing
             var drawMenu = new Menu("Drawing", "Drawing");
-            drawMenu.AddItem(new MenuItem("DrawE", "Draw spellE Range")).SetValue(true);
+            drawMenu.AddItem(new MenuItem("DrawE", "Draw E Range")).SetValue(true);
             Config.AddSubMenu(drawMenu);
             
             // PrintChat
