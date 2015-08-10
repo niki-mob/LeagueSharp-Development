@@ -264,9 +264,26 @@
 
             else if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
-                args.Process = false;
                 var enemy = HeroManager.Enemies.OrderBy(t => t.Health).FirstOrDefault();
                 var minion = MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange).Where(t => t.IsEnemy && Orbwalker.InAutoAttackRange(t)).OrderBy(t => t.Health).FirstOrDefault();
+
+                if (minion == null)
+                {
+                    if (enemy != null
+                        && Orbwalker.InAutoAttackRange(enemy))
+                    {
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
+                    }
+                }
+                else
+                {
+                    if (enemy != null
+                        && minion.Health > ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion)
+                        && Orbwalker.InAutoAttackRange(enemy))
+                    {
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
+                    }
+                }
 
                 if (minion != null && minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && !Orbwalker.InAutoAttackRange(enemy))
                 {
@@ -277,13 +294,6 @@
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                 }
-
-                if (enemy != null && minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
-                {
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
-                }
-
-                return;
             }
 
             #endregion
@@ -498,7 +508,7 @@
             var useQHarass = Config.SubMenu("Harass").Item("qharass").GetValue<bool>();
             var targetAdc = Config.SubMenu("Combo").Item("useqADC").GetValue<bool>();
             var checkAA = Config.SubMenu("Misc").Item("checkAA").GetValue<bool>();
-            var checkaaRange = Config.SubMenu("Misc").Item("checkaaRange").GetValue<Slider>().Value;
+            var checkaaRange = (float)Config.SubMenu("Misc").Item("checkaaRange").GetValue<Slider>().Value;
             var t = target as Obj_AI_Hero;
 
             if (t != null && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
@@ -567,7 +577,7 @@
             {
                 if (checkAA)
                 {
-                    if (useQHarass && Q.IsReady() && Q.IsInRange(t, -100f))
+                    if (useQHarass && Q.IsReady() && Q.IsInRange(t, -checkaaRange))
                     {
                         Q.Cast(t, Packets);
                     }
