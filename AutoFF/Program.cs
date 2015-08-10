@@ -64,7 +64,7 @@ namespace AutoFF
         }
 
         /// <summary>
-        /// The game_ on update.
+        /// Called each time the Game Updates
         /// </summary>
         /// <param name="args">
         /// The args.
