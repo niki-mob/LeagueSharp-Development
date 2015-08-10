@@ -223,7 +223,7 @@
             Drawing.OnDraw += Drawing_OnDraw;
 
             // GG PrintChat Bik™
-            Game.PrintChat("<font color='#FBF5EF'>Game.PrintChat Bik</font> - <font color = '#01DF3A'>PandaTeemo v1.7.5.2 Loaded</font>");
+            Game.PrintChat("<font color='#FBF5EF'>Game.PrintChat Bik</font> - <font color = '#01DF3A'>PandaTeemo v1.7.5.3 Loaded</font>");
 
             // Loads ShroomPosition
             FileHandler = new FileHandler();
@@ -244,15 +244,16 @@
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
-                args.Process = false;
                 foreach (var minion in MinionManager.GetMinions(ObjectManager.Player.Position, Player.AttackRange))
                 {
                     if (minion.Health <= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion))
                     {
                         Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                     }
-                    args.Process = false;
-                    return;
+                    else
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -281,12 +282,11 @@
                     Player.IssueOrder(GameObjectOrder.AttackUnit, minion);
                 }
 
-                if (minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
+                if (enemy != null && minion.Health >= ObjectManager.Player.GetAutoAttackDamage(minion) + TeemoE(minion) && Orbwalker.InAutoAttackRange(enemy))
                 {
                     Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
                 }
 
-                args.Process = false;
                 return;
             }
 
@@ -296,9 +296,9 @@
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
-
                 var attackTurret = Config.SubMenu("LaneClear").Item("attackTurret").GetValue<bool>();
                 var attackWard = Config.SubMenu("LaneClear").Item("attackWard").GetValue<bool>();
+                var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
                 var turret = ObjectManager.Get<Obj_AI_Turret>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
                 var inhib = ObjectManager.Get<Obj_BarracksDampener>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
                 var nexus = ObjectManager.Get<Obj_HQ>().Where(t => Orbwalking.InAutoAttackRange(t) && t.IsEnemy).OrderBy(t => t.Health).FirstOrDefault();
@@ -350,9 +350,7 @@
                         if (Orbwalker.InAutoAttackRange(turret) && attackTurret
                             || Orbwalker.InAutoAttackRange(inhib) && attackTurret
                             || Orbwalker.InAutoAttackRange(nexus) && attackTurret
-                            || Orbwalker.InAutoAttackRange(ward) && attackWard
-                            || !Orbwalker.InAutoAttackRange(m) && attackTurret
-                            || !Orbwalker.InAutoAttackRange(m) && attackWard)
+                            || Orbwalker.InAutoAttackRange(ward) && attackWard)
                         {
                             #region Turret
 
@@ -388,7 +386,8 @@
                                     Player.IssueOrder(GameObjectOrder.AttackUnit, m);
                                 }
 
-                                if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
+                                if (ward.IsValid && Orbwalker.InAutoAttackRange(ward) && ward.IsEnemy
+                                    && m.Health > Player.GetAutoAttackDamage(m) + TeemoE(m))
                                 {
                                     Player.IssueOrder(GameObjectOrder.AttackUnit, ward);
                                 }
@@ -396,59 +395,64 @@
 
                             #endregion
                         }
-                    }
 
-                    else
-                    {
-                        #region Variables
-
-                        var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
-
-                        #endregion
-
-                        #region Cannot Kill Minion
-
-                        if (Player.GetAutoAttackDamage(m) + TeemoE(m) < m.Health)
+                        else
                         {
-                            Player.IssueOrder(GameObjectOrder.AttackUnit, m);
-                        }
+                            #region Variables
 
-                        #endregion
+                            var qManaManager = Config.SubMenu("LaneClear").Item("qManaManager").GetValue<Slider>().Value;
 
-                        #region Can Kill Minion
+                            #endregion
 
-                        else if (m.Health <= Player.GetAutoAttackDamage(m) + TeemoE(m) || m.Health <= Q.GetDamage(m))
-                        {
-                            var useQ = Config.SubMenu("LaneClear").Item("qclear").GetValue<bool>();
-                            if (useQ)
+                            #region Cannot Kill Minion
+
+                            if (useQ && m.Health > Q.GetDamage(m))
                             {
-                                if (Q.IsReady() && Q.IsInRange(m) && Q.GetDamage(m) >= m.Health && qManaManager <= (int)Player.ManaPercent)
-                                {
-                                    Q.CastOnUnit(m, Packets);
-                                }
+                                Q.CastOnUnit(m, Packets);
+                            }
 
-                                else if (Player.Distance3D(m) <= Player.AttackRange)
+                            if (Player.GetAutoAttackDamage(m) + TeemoE(m) < m.Health)
+                            {
+                                Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                            }
+
+                            #endregion
+
+                            #region Can Kill Minion
+
+                            else if (m.Health <= Player.GetAutoAttackDamage(m) + TeemoE(m) || m.Health <= Q.GetDamage(m))
+                            {
+                                if (useQ)
+                                {
+                                    if (Q.IsReady() && Q.IsInRange(m) && Q.GetDamage(m) >= m.Health
+                                        && qManaManager >= (int)Player.ManaPercent)
+                                    {
+                                        Q.CastOnUnit(m, Packets);
+                                    }
+
+                                    else if (Player.Distance3D(m) <= Player.AttackRange)
+                                    {
+                                        Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                                    }
+                                }
+                                else
                                 {
                                     Player.IssueOrder(GameObjectOrder.AttackUnit, m);
                                 }
                             }
+
+                            #endregion
+
+                            #region No Minions
+
                             else
                             {
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, m);
+                                args.Process = true;
+                                return;
                             }
+
+                            #endregion
                         }
-
-                        #endregion
-
-                        #region No Minions
-
-                        else
-                        {
-                            args.Process = true;
-                            return;
-                        }
-
-                        #endregion
                     }
                 }
             }
