@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
 
@@ -20,61 +21,66 @@
         /// <summary>
         /// List of the Position of the Shroom
         /// </summary>
+        [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:FieldsMustBePrivate", Justification = "Reviewed. Suppression is OK here.")]
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         public static List<Vector3> Position = new List<Vector3>();
 
-        static readonly string ShroomLocation = Config.AppDataDirectory + @"\PandaTeemo\";
+        /// <summary>
+        /// The root of the folder.
+        /// </summary>
+        private static readonly string ShroomLocation = Config.AppDataDirectory + @"\PandaTeemo\";
 
         /// <summary>
         /// File Location for X
         /// </summary>
-        static string xFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "xFile" + ".txt";
+        private static string xFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "xFile" + ".txt";
 
         /// <summary>
         /// File Location for Y
         /// </summary>
-        static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
+        private static string yFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "yFile" + ".txt";
 
         /// <summary>
         /// File Location for Z
         /// </summary>
-        static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
+        private static string zFile = ShroomLocation + Utility.Map.GetMap().Type + @"\" + "zFile" + ".txt";
 
         /// <summary>
         /// Array of X String
         /// </summary>
-        static string[] xString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
+        private static string[] xString;
 
         /// <summary>
         /// Array of Z String
         /// </summary>
-        static string[] zString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
+        private static string[] zString;
 
         /// <summary>
         /// Array of Y String
         /// </summary>
-        static string[] yString = new string[Program.Config.SubMenu("Misc").Item("customLocationInt").GetValue<Slider>().Value];
+        private static string[] yString;
 
         /// <summary>
-        /// Array of X Int
+        /// Array of X Integer
         /// </summary>
-        public static int[] XInt = new int[xString.Count()];
+        private static int[] xInt;
 
         /// <summary>
-        /// Array of Z Int
+        /// Array of Z Integer
         /// </summary>
-        public static int[] ZInt = new int[zString.Count()];
+        private static int[] zInt;
 
         /// <summary>
-        /// Array of Y Int
+        /// Array of Y Integer
         /// </summary>
-        public static int[] YInt = new int[yString.Count()];
+        private static int[] yInt;
         
         #endregion
 
         #region Methods
 
         /// <summary>
-        /// Initialize the FileHandler
+        /// Initializes a new instance of the <see cref="FileHandler"/> class. 
         /// </summary>
         public FileHandler()
         {
@@ -84,9 +90,9 @@
         }
 
         /// <summary>
-        /// Checks for missing files, Converts the values to int, then adds them into a Vector3 List
+        /// Checks for missing files, Converts the values to integer, then adds them into a Vector3 List
         /// </summary>
-        public static void DoChecks()
+        private static void DoChecks()
         {
             #region Check Missing Files
 
@@ -100,12 +106,10 @@
                 Directory.CreateDirectory(ShroomLocation + Utility.Map.MapType.Unknown);
                 CreateFile();
             }
-
             else if (!File.Exists(xFile) || !File.Exists(zFile) || !File.Exists(yFile))
             {
                 CreateFile();
             }
-
             else if (File.Exists(xFile) && File.Exists(zFile) && File.Exists(yFile))
             {
                 ConvertToInt();
@@ -117,7 +121,7 @@
         /// <summary>
         /// Creates Files that are missing
         /// </summary>
-        static void CreateFile()
+        private static void CreateFile()
         {
             #region Create File
 
@@ -125,12 +129,10 @@
             {
                 File.WriteAllText(xFile, "5020");
             }
-
             else if (!File.Exists(yFile))
             {
                 File.WriteAllText(yFile, "8430");
             }
-
             else if (!File.Exists(zFile))
             {
                 File.WriteAllText(zFile, "2");
@@ -144,13 +146,14 @@
         /// <summary>
         /// Gets the location of the shroom and adds it to the list
         /// </summary>
+        [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         public static void GetShroomLocation()
         {
             #region Get Location
 
-            for (var i = 0; i < XInt.Count() && i < YInt.Count() && i < ZInt.Count(); i++)
+            for (var i = 0; i < xInt.Count() && i < yInt.Count() && i < zInt.Count(); i++)
             {
-                Position.Add(new Vector3(XInt[i], ZInt[i], YInt[i]));
+                Position.Add(new Vector3(xInt[i], zInt[i], yInt[i]));
                 if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
                 {
                     Game.PrintChat(Position[i].ToString());
@@ -161,11 +164,19 @@
         }
 
         /// <summary>
-        /// Converts String to Int
+        /// Converts String to Integer
         /// </summary>
-        static void ConvertToInt()
+        private static void ConvertToInt()
         {
             #region Convert to Int
+
+            xString = new string[File.ReadAllLines(xFile).Count()];
+            yString = new string[File.ReadAllLines(yFile).Count()];
+            zString = new string[File.ReadAllLines(zFile).Count()];
+
+            xInt = new int[File.ReadAllLines(xFile).Count()];
+            yInt = new int[File.ReadAllLines(yFile).Count()];
+            zInt = new int[File.ReadAllLines(zFile).Count()];
 
             xString = File.ReadAllLines(xFile);
             yString = File.ReadAllLines(yFile);
@@ -173,17 +184,17 @@
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                XInt[i] = Convert.ToInt32(xString[i]);
+                xInt[i] = Convert.ToInt32(xString[i]);
             }
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                ZInt[i] = Convert.ToInt32(zString[i]);
+                zInt[i] = Convert.ToInt32(zString[i]);
             }
 
             for (var i = 0; i < xString.Count(); i++)
             {
-                YInt[i] = Convert.ToInt32(yString[i]);
+                yInt[i] = Convert.ToInt32(yString[i]);
             }
 
             GetShroomLocation();
