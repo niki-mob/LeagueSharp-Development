@@ -268,7 +268,7 @@
         {
             if (sender.IsMe)
             {
-                Game.PrintChat(args.SData.Name.ToLower());
+                //Game.PrintChat(args.SData.Name.ToLower());
                 if (args.SData.Name.ToLower() == "teemorcast")
                 {
                     lastR = Environment.TickCount;
