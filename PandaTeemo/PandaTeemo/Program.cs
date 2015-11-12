@@ -601,9 +601,9 @@
                 if (shroom != null)
                 {
                     var shroomPosition = shroom.Position;
-                    var predictionPosition = shroomPosition.Extend(rtarget.Position, Player.CharData.SelectionRadius * R.Level + 2);
+                    var predictionPosition = shroomPosition.Extend(rtarget.Position, Player.CharData.AcquisitionRange * R.Level + 2);
 
-                    if (R.IsInRange(rtarget, Player.CharData.SelectionRadius * R.Level + 2) && IsShroomed(shroomPosition))
+                    if (R.IsInRange(rtarget, Player.CharData.AcquisitionRange * R.Level + 2) && IsShroomed(shroomPosition))
                     {
                         R.Cast(predictionPosition);
                     }
