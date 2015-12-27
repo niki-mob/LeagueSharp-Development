@@ -94,7 +94,7 @@
             {
                 // Custom List
                 if (FileHandler.Position.Any() &&
-                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                    Essentials.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -169,7 +169,7 @@
             {
                 // Custom List
                 if (FileHandler.Position.Any() &&
-                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                    Essentials.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -199,7 +199,7 @@
             {
                 // Custom List
                 if (FileHandler.Position.Any() &&
-                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                    Essentials.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -213,7 +213,7 @@
             {
                 // Custom List
                 if (FileHandler.Position.Any() &&
-                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                    Essentials.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {
@@ -225,7 +225,7 @@
             {
                 // Custom List
                 if (FileHandler.Position.Any() &&
-                    Program.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
+                    Essentials.Config.SubMenu("Misc").Item("customLocation").GetValue<bool>())
                 {
                     foreach (var pos in FileHandler.Position)
                     {

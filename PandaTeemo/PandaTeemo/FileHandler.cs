@@ -150,7 +150,7 @@
             for (var i = 0; i < xInt.Count() && i < yInt.Count() && i < zInt.Count(); i++)
             {
                 Position.Add(new Vector3(xInt[i], zInt[i], yInt[i]));
-                if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
+                if (Essentials.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
                 {
                     Game.PrintChat(Position[i].ToString());
                 }
@@ -195,7 +195,7 @@
 
             GetShroomLocation();
 
-            if (Program.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
+            if (Essentials.Config.SubMenu("Drawing").SubMenu("debug").Item("debugpos").GetValue<bool>())
             {
                 Game.PrintChat("Sucessfully Initialized FileHandler");
             }
