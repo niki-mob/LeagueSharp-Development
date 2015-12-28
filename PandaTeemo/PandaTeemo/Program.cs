@@ -140,6 +140,7 @@
 
             // Events
             Game.OnUpdate += Game_OnUpdate;
+            Game.OnUpdate += ActiveStates.OnUpdate;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Orbwalking.AfterAttack += OrbwalkingAfterAttack;
